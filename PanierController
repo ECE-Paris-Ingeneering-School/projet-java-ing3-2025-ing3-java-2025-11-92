@@ -1,0 +1,131 @@
+package controller;
+
+import dao.HistoriqueActionDAO;
+import model.Article;
+import model.Client;
+import model.HistoriqueAction;
+import model.Panier;
+import java.awt.Component;
+
+public class PanierController {
+    private Panier panier;
+    private ArticleController articleController;
+    private HistoriqueActionDAO historiqueActionDAO;
+    
+    public PanierController(Client client) {
+        this.panier = new Panier(client);
+        this.articleController = new ArticleController();
+        this.historiqueActionDAO = new HistoriqueActionDAO();
+    }
+    
+    public boolean ajouterArticle(int articleId, int quantite, Component parent) {
+        if (quantite <= 0) {
+            return false;
+        }
+        
+        Article article = articleController.getArticleById(articleId);
+        if (article == null) {
+            return false;
+        }
+        
+        if (article.getStock() < quantite) {
+            return false;
+        }
+        
+        boolean remiseAppliquee = quantite >= article.getSeuilGros();
+        
+        panier.ajouterArticle(article, quantite);
+        
+        HistoriqueAction action = new HistoriqueAction(
+            panier.getClient().getId(), 
+            "Ajout au panier : " + article.getNom() + " x " + quantite + 
+            (remiseAppliquee ? " (avec remise)" : "")
+        );
+        historiqueActionDAO.ajouterAction(action);
+        
+        if (remiseAppliquee && parent != null) {
+            double economie = (article.getPrixUnitaire() - article.getPrixGros()) * quantite;
+            String message = String.format(
+                "Félicitations ! <br><br>Vous avez bénéficié d'une remise sur <b>%s</b> !<br><br>" +
+                "Prix unitaire normal : <b>%.2f €</b><br>" +
+                "Prix unitaire remisé : <b>%.2f €</b><br><br>" +
+                "Vous économisez <b>%.2f €</b> au total !",
+                article.getNom(),
+                article.getPrixUnitaire(),
+                article.getPrixGros(),
+                economie
+            );
+            utils.SwingUtils.showSuccess(parent, message);
+        }
+        
+        return true;
+    }
+    
+    public boolean ajouterArticle(int articleId, int quantite) {
+        return ajouterArticle(articleId, quantite, null);
+    }
+    
+    public void supprimerArticle(int articleId) {
+        Article article = articleController.getArticleById(articleId);
+        
+        if (article != null) {
+            panier.supprimerArticle(articleId);
+            
+            HistoriqueAction action = new HistoriqueAction(
+                panier.getClient().getId(), 
+                "Suppression du panier : " + article.getNom()
+            );
+            historiqueActionDAO.ajouterAction(action);
+        }
+    }
+    
+    public boolean mettreAJourQuantite(int articleId, int quantite) {
+        if (quantite < 0) {
+            return false;
+        }
+        
+        if (quantite == 0) {
+            supprimerArticle(articleId);
+            return true;
+        }
+        
+        Article article = articleController.getArticleById(articleId);
+        if (article == null) {
+            return false;
+        }
+        
+        if (article.getStock() < quantite) {
+            return false;
+        }
+        
+        panier.mettreAJourQuantite(articleId, quantite);
+        
+        HistoriqueAction action = new HistoriqueAction(
+            panier.getClient().getId(), 
+            "Mise à jour du panier : " + article.getNom() + " - Quantité : " + quantite
+        );
+        historiqueActionDAO.ajouterAction(action);
+        
+        return true;
+    }
+    
+    public void viderPanier() {
+        if (!panier.estVide()) {
+            panier.vider();
+            
+            HistoriqueAction action = new HistoriqueAction(
+                panier.getClient().getId(), 
+                "Vidage du panier"
+            );
+            historiqueActionDAO.ajouterAction(action);
+        }
+    }
+    
+    public Panier getPanier() {
+        return panier;
+    }
+    
+    public double calculerTotal() {
+        return panier.calculerTotal();
+    }
+}
