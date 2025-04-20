@@ -1,0 +1,79 @@
+package controller;
+
+import dao.HistoriqueActionDAO;
+import dao.UtilisateurDAO;
+import model.Administrateur;
+import model.Client;
+import model.HistoriqueAction;
+import model.Utilisateur;
+
+import java.util.List;
+
+public class UtilisateurController {
+    private UtilisateurDAO utilisateurDAO;
+    private HistoriqueActionDAO historiqueActionDAO;
+    private static Utilisateur utilisateurConnecte;
+    
+    public UtilisateurController() {
+        this.utilisateurDAO = new UtilisateurDAO();
+        this.historiqueActionDAO = new HistoriqueActionDAO();
+    }
+    
+    public Utilisateur authentifier(String email, String motDePasse) {
+        Utilisateur utilisateur = utilisateurDAO.authentifier(email, motDePasse);
+        if (utilisateur != null) {
+            utilisateurConnecte = utilisateur;
+            
+            HistoriqueAction action = new HistoriqueAction(utilisateur.getId(), "Connexion au système");
+            historiqueActionDAO.ajouterAction(action);
+        }
+        return utilisateur;
+    }
+    
+    public Client inscrireClient(String nom, String email, String motDePasse) {
+        if (utilisateurDAO.emailExiste(email)) {
+            return null;
+        }
+        
+        Client client = new Client();
+        client.setNom(nom);
+        client.setEmail(email);
+        client.setMotDePasse(motDePasse);
+        client.setEstAncienClient(false);
+        
+        if (utilisateurDAO.ajouterClient(client)) {
+            return (Client) authentifier(email, motDePasse);
+        }
+        
+        return null;
+    }
+    
+    public List<Client> getAllClients() {
+        return utilisateurDAO.getAllClients();
+    }
+    
+    public Client getClientById(int id) {
+        return utilisateurDAO.getClientById(id);
+    }
+    
+    public void deconnecter() {
+        if (utilisateurConnecte != null) {
+            HistoriqueAction action = new HistoriqueAction(utilisateurConnecte.getId(), "Déconnexion du système");
+            historiqueActionDAO.ajouterAction(action);
+            
+            utilisateurConnecte = null;
+        }
+    }
+    
+    public static Utilisateur getUtilisateurConnecte() {
+        return utilisateurConnecte;
+    }
+    
+    public static boolean estAdministrateur() {
+        return utilisateurConnecte instanceof Administrateur;
+    }
+    
+    public static boolean estClient() {
+        return utilisateurConnecte instanceof Client;
+    }
+}
