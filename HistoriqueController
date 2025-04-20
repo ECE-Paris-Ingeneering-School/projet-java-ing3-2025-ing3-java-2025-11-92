@@ -1,0 +1,31 @@
+package controller;
+
+import dao.HistoriqueActionDAO;
+import model.HistoriqueAction;
+
+import java.util.List;
+
+public class HistoriqueController {
+    private HistoriqueActionDAO historiqueActionDAO;
+    
+    public HistoriqueController() {
+        this.historiqueActionDAO = new HistoriqueActionDAO();
+    }
+    
+    public List<HistoriqueAction> getActionsByUtilisateur(int utilisateurId) {
+        return historiqueActionDAO.getActionsByUtilisateur(utilisateurId);
+    }
+    
+    public List<HistoriqueAction> getActionsAdministrateurs() {
+        return historiqueActionDAO.getActionsAdministrateurs();
+    }
+    
+    public List<HistoriqueAction> getAllActions() {
+        return historiqueActionDAO.getAllActions();
+    }
+    
+    public boolean ajouterAction(int utilisateurId, String description) {
+        HistoriqueAction action = new HistoriqueAction(utilisateurId, description);
+        return historiqueActionDAO.ajouterAction(action);
+    }
+}
