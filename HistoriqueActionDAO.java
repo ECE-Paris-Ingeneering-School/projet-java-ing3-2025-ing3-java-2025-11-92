@@ -18,7 +18,7 @@ public class HistoriqueActionDAO {
      * @return true si l'ajout est réussi
      */
     public boolean ajouterAction(HistoriqueAction historiqueAction) {
-        String sql = "INSERT INTO historique_action (utilisateur_id, action, date_heure) VALUES (?, ?, ?)";
+        String sql ="INSERT INTO historique_action (utilisateur_id, action, date_heure) VALUES (?, ?, ?)";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
