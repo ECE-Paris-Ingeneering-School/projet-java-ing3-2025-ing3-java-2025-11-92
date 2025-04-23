@@ -9,7 +9,7 @@ public class HistoriqueController {
     private HistoriqueActionDAO historiqueActionDAO;
     
     public HistoriqueController() {
-        this.historiqueActionDAO = new HistoriqueActionDAO();
+        this.historiqueActionDAO =new HistoriqueActionDAO();
     }
     
     public List<HistoriqueAction> getActionsByUtilisateur(int utilisateurId) {
