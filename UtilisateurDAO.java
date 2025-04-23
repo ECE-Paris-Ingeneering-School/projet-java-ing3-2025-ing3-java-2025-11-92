@@ -21,7 +21,7 @@ public class UtilisateurDAO {
      * @return l'utilisateur si authentifié, null sinon
      */
     public Utilisateur authentifier(String email, String motDePasse) {
-        String sql = "SELECT u.id, u.nom, u.email, u.mot_de_passe, " +
+        String sql ="SELECT u.id, u.nom, u.email, u.mot_de_passe, " +
                 "c.est_ancien_client, " +
                 "CASE WHEN a.utilisateur_id IS NOT NULL THEN 'ADMIN' ELSE 'CLIENT' END as type " +
                 "FROM utilisateur u " +
