@@ -34,7 +34,7 @@ public class CommandeDAO {
                 stmtCommande.setInt(1, commande.getClientId());
                 stmtCommande.setTimestamp(2, new Timestamp(commande.getDateCommande().getTime()));
                 
-                int affectedRows = stmtCommande.executeUpdate();
+                int affectedRows =stmtCommande.executeUpdate();
                 if (affectedRows == 0) {
                     throw new SQLException("La création de la commande a échoué, aucune ligne affectée.");
                 }
