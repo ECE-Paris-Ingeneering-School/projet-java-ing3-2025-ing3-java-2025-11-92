@@ -7,11 +7,8 @@ import model.HistoriqueAction;
 import model.Utilisateur;
 
 import java.util.List;
-
-/**
- * Contrôleur gérant les actions liées aux articles
- */
-public class ArticleController {
+//Controleur Article
+public class ArticleController {  //Classe article créer avec DAO en liaison entre BDD et interface
     private ArticleDAO articleDAO;
     private HistoriqueActionDAO historiqueActionDAO;
     
@@ -20,50 +17,31 @@ public class ArticleController {
         this.historiqueActionDAO = new HistoriqueActionDAO();
     }
     
-    /**
-     * Récupère tous les articles
-     * @return la liste des articles
-     */
+
     public List<Article> getAllArticles() {
         return articleDAO.getAllArticles();
-    }
-    
-    /**
-     * Récupère les articles par marque
-     * @param marque la marque à filtrer
-     * @return la liste des articles de cette marque
-     */
+    } //Retourne la liste de tout les articles
+
     public List<Article> getArticlesByMarque(String marque) {
         return articleDAO.getArticlesByMarque(marque);
-    }
+    } // On utilise la fonction article par marque créer dans partie model
     
-    /**
-     * Récupère toutes les marques disponibles
-     * @return la liste des marques
-     */
+
     public List<String> getAllMarques() {
         return articleDAO.getAllMarques();
-    }
+    } //On renvoie la liste
     
-    /**
-     * Récupère un article par son ID
-     * @param id l'identifiant de l'article
-     * @return l'article correspondant ou null
-     */
+
     public Article getArticleById(int id) {
         return articleDAO.getArticleById(id);
-    }
+    } //meme chose avec l'ID de l article
     
-    /**
-     * Ajoute un nouvel article
-     * @param article l'article à ajouter
-     * @return true si l'ajout est réussi
-     */
+
     public boolean ajouterArticle(Article article) {
         boolean resultat = articleDAO.ajouterArticle(article);
         
         if (resultat) {
-            // Enregistrer l'action dans l'historique
+            // Enregistrer l'action dans l'historique on stock l'action
             Utilisateur utilisateur = UtilisateurController.getUtilisateurConnecte();
             if (utilisateur != null) {
                 HistoriqueAction action = new HistoriqueAction(
@@ -77,13 +55,9 @@ public class ArticleController {
         return resultat;
     }
     
-    /**
-     * Met à jour un article existant
-     * @param article l'article à mettre à jour
-     * @return true si la mise à jour est réussie
-     */
+
     public boolean mettreAJourArticle(Article article) {
-        boolean resultat = articleDAO.mettreAJourArticle(article);
+        boolean resultat = articleDAO.mettreAJourArticle(article); //Meme procédé pour mise a jour
         
         if (resultat) {
             // Enregistrer l'action dans l'historique
@@ -99,21 +73,13 @@ public class ArticleController {
         
         return resultat;
     }
-    
-    /**
-     * Supprime un article
-     * @param id l'identifiant de l'article à supprimer
-     * @return true si la suppression est réussie
-     */
     public boolean supprimerArticle(int id) {
         // Récupérer l'article avant de le supprimer pour l'historique
         Article article = getArticleById(id);
         if (article == null) {
-            return false;
+            return false; //Meme chose pour supprimer
         }
-        
         boolean resultat = articleDAO.supprimerArticle(id);
-        
         if (resultat) {
             // Enregistrer l'action dans l'historique
             Utilisateur utilisateur = UtilisateurController.getUtilisateurConnecte();
@@ -125,34 +91,20 @@ public class ArticleController {
                 historiqueActionDAO.ajouterAction(action);
             }
         }
-        
         return resultat;
     }
-    
-    /**
-     * Vérifie si un article a assez de stock pour une quantité donnée
-     * @param articleId l'ID de l'article
-     * @param quantite la quantité demandée
-     * @return true si le stock est suffisant
-     */
+    //Fonction pour verifier si artcile toujours dispo:
     public boolean verifierStock(int articleId, int quantite) {
         Article article = getArticleById(articleId);
         return article != null && article.getStock() >= quantite;
     }
     
-    /**
-     * Récupère les données pour le graphique des ventes par article
-     * @return les données pour le graphique
-     */
+    //Graphique vente/Article
     public List<Object[]> getVentesParArticle() {
         return articleDAO.getVentesParArticle();
     }
     
-    /**
-     * Récupère les articles les plus vendus
-     * @param limit le nombre d'articles à récupérer
-     * @return la liste des articles les plus vendus
-     */
+    //On récupère article les plus vendus
     public List<Object[]> getArticlesPlusVendus(int limit) {
         return articleDAO.getArticlesPlusVendus(limit);
     }
