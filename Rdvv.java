@@ -1,59 +1,85 @@
-// RendezVousApp.java
 import java.util.*;
 
-public class RendezVousApp {
+public class RendezVousSimple {
+    static Scanner scanner = new Scanner(System.in);
+    static Map<String, String> comptes = new HashMap<>();
+    static Map<String, List<String>> rdvs = new HashMap<>();
+
     public static void main(String[] args) {
-        Application app = new Application();
-        app.run();
+        System.out.println("=== Application Rendez-vous Spécialiste ===");
+        while (true) {
+            System.out.println("\n1. Inscription\n2. Connexion\n3. Quitter");
+            String choix = scanner.nextLine();
+
+            if (choix.equals("1")) inscription();
+            else if (choix.equals("2")) connexion();
+            else if (choix.equals("3")) break;
+            else System.out.println("Choix invalide.");
+        }
     }
-}
 
-class Application {
-    private List<Patient> patients = new ArrayList<>();
-    private List<Specialiste> specialistes = new ArrayList<>();
-    private List<RendezVous> rendezVousList = new ArrayList<>();
+    static void inscription() {
+        System.out.print("Identifiant : ");
+        String id = scanner.nextLine();
+        System.out.print("Mot de passe : ");
+        String mdp = scanner.nextLine();
 
-    public void run() {
-        // Menu très simplifié
-        System.out.println("Bienvenue dans l'application de rendez-vous spécialiste !");
-        // Tu pourras ici ajouter : inscription, connexion, réservation, etc.
+        if (comptes.containsKey(id)) {
+            System.out.println("Ce compte existe déjà.");
+        } else {
+            comptes.put(id, mdp);
+            System.out.println("Inscription réussie !");
+        }
     }
-}
 
-class Patient {
-    String id;
-    String motDePasse;
-    boolean estAncien;
+    static void connexion() {
+        System.out.print("Identifiant : ");
+        String id = scanner.nextLine();
+        System.out.print("Mot de passe : ");
+        String mdp = scanner.nextLine();
 
-    public Patient(String id, String motDePasse, boolean estAncien) {
-        this.id = id;
-        this.motDePasse = motDePasse;
-        this.estAncien = estAncien;
+        if (mdp.equals(comptes.get(id))) {
+            System.out.println("Connexion réussie !");
+            menuPatient(id);
+        } else {
+            System.out.println("Identifiants incorrects.");
+        }
     }
-}
 
-class Specialiste {
-    String nom;
-    String specialisation;
-    List<String> lieux;
+    static void menuPatient(String id) {
+        while (true) {
+            System.out.println("\n--- Menu Patient ---");
+            System.out.println("1. Prendre rendez-vous\n2. Voir mes rendez-vous\n3. Déconnexion");
+            String choix = scanner.nextLine();
 
-    public Specialiste(String nom, String specialisation, List<String> lieux) {
-        this.nom = nom;
-        this.specialisation = specialisation;
-        this.lieux = lieux;
+            if (choix.equals("1")) prendreRdv(id);
+            else if (choix.equals("2")) voirRdvs(id);
+            else if (choix.equals("3")) break;
+            else System.out.println("Choix invalide.");
+        }
     }
-}
 
-class RendezVous {
-    Patient patient;
-    Specialiste specialiste;
-    String dateHeure;
-    String lieu;
+    static void prendreRdv(String id) {
+        System.out.print("Nom du spécialiste : ");
+        String specialiste = scanner.nextLine();
+        System.out.print("Date et heure (ex: 12/05 à 15h) : ");
+        String dateHeure = scanner.nextLine();
 
-    public RendezVous(Patient patient, Specialiste specialiste, String dateHeure, String lieu) {
-        this.patient = patient;
-        this.specialiste = specialiste;
-        this.dateHeure = dateHeure;
-        this.lieu = lieu;
+        String rdv = specialiste + " - " + dateHeure;
+        rdvs.computeIfAbsent(id, k -> new ArrayList<>()).add(rdv);
+
+        System.out.println("Rendez-vous pris avec " + rdv);
+    }
+
+    static void voirRdvs(String id) {
+        List<String> mesRdvs = rdvs.getOrDefault(id, new ArrayList<>());
+        if (mesRdvs.isEmpty()) {
+            System.out.println("Aucun rendez-vous trouvé.");
+        } else {
+            System.out.println("Vos rendez-vous :");
+            for (String rdv : mesRdvs) {
+                System.out.println("• " + rdv);
+            }
+        }
     }
 }
