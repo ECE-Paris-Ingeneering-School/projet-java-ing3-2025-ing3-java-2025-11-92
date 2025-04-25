@@ -1,0 +1,32 @@
+package controller;
+
+import dao.HistoriqueActionDAO;
+import model.HistoriqueAction;
+
+import java.util.List;
+
+// Controler gérant les actions de l'historique
+public class HistoriqueController {
+    private HistoriqueActionDAO historiqueActionDAO;
+
+    public HistoriqueController() {
+        this.historiqueActionDAO = new HistoriqueActionDAO();
+    }
+    // Récupère l'historique des actions d'un utilisateur
+    public List<HistoriqueAction> getActionsByUtilisateur(int utilisateurId) {
+        return historiqueActionDAO.getActionsByUtilisateur(utilisateurId);
+    }
+    // Récupère toutes les actions des administrateurs
+    public List<HistoriqueAction> getActionsAdministrateurs() {
+        return historiqueActionDAO.getActionsAdministrateurs();
+    }
+    // Récupère toutes les actions
+    public List<HistoriqueAction> getAllActions() {
+        return historiqueActionDAO.getAllActions();
+    }
+    //  On ajoute une action à l'historique
+    public boolean ajouterAction(int utilisateurId, String description) {
+        HistoriqueAction action = new HistoriqueAction(utilisateurId, description);
+        return historiqueActionDAO.ajouterAction(action);
+    }
+}

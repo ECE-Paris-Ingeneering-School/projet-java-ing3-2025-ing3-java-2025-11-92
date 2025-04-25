@@ -1,0 +1,184 @@
+package controller;
+
+import dao.HistoriqueActionDAO;
+import model.Article;
+import model.Client;
+import model.HistoriqueAction;
+import model.Panier;
+import java.awt.Component;
+
+
+/**
+ * Contrôleur gérant les actions liées au panier
+ */
+public class PanierController {
+    private Panier panier;
+    private ArticleController articleController;
+    private HistoriqueActionDAO historiqueActionDAO;
+    
+    public PanierController(Client client) {
+        this.panier = new Panier(client);
+        this.articleController = new ArticleController();
+        this.historiqueActionDAO = new HistoriqueActionDAO();
+    }
+    
+    /**
+     * Ajoute un article au panier
+     * @param articleId l'ID de l'article
+     * @param quantite la quantité
+     * @param parent composant parent pour afficher les messages
+     * @return true si l'ajout est réussi
+     */
+    public boolean ajouterArticle(int articleId, int quantite, Component parent) {
+        // Vérifier que la quantité est positive
+        if (quantite <= 0) {
+            return false;
+        }
+        
+        // Récupérer l'article
+        Article article = articleController.getArticleById(articleId);
+        if (article == null) {
+            return false;
+        }
+        
+        // Vérifier le stock
+        if (article.getStock() < quantite) {
+            return false;
+        }
+        
+        // Vérifier si la quantité dépasse le seuil de remise
+        boolean remiseAppliquee = quantite >= article.getSeuilGros();
+        
+        // Ajouter au panier
+        panier.ajouterArticle(article, quantite);
+        
+        // Enregistrer l'action dans l'historique
+        HistoriqueAction action = new HistoriqueAction(
+            panier.getClient().getId(), 
+            "Ajout au panier : " + article.getNom() + " x " + quantite + 
+            (remiseAppliquee ? " (avec remise)" : "")
+        );
+        historiqueActionDAO.ajouterAction(action);
+        
+        // Afficher un message si remise appliquée
+        if (remiseAppliquee && parent != null) {
+            double economie = (article.getPrixUnitaire() - article.getPrixGros()) * quantite;
+            String message = String.format(
+                "Félicitations ! <br><br>Vous avez bénéficié d'une remise sur <b>%s</b> !<br><br>" +
+                "Prix unitaire normal : <b>%.2f €</b><br>" +
+                "Prix unitaire remisé : <b>%.2f €</b><br><br>" +
+                "Vous économisez <b>%.2f €</b> au total !",
+                article.getNom(),
+                article.getPrixUnitaire(),
+                article.getPrixGros(),
+                economie
+            );
+            utils.SwingUtils.showSuccess(parent, message);
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Ajoute un article au panier (sans affichage de message)
+     * @param articleId l'ID de l'article
+     * @param quantite la quantité
+     * @return true si l'ajout est réussi
+     */
+    public boolean ajouterArticle(int articleId, int quantite) {
+        return ajouterArticle(articleId, quantite, null);
+    }
+    
+    /**
+     * Supprime un article du panier
+     * @param articleId l'ID de l'article à supprimer
+     */
+    public void supprimerArticle(int articleId) {
+        Article article = articleController.getArticleById(articleId);
+        
+        if (article != null) {
+            panier.supprimerArticle(articleId);
+            
+            // Enregistrer l'action dans l'historique
+            HistoriqueAction action = new HistoriqueAction(
+                panier.getClient().getId(), 
+                "Suppression du panier : " + article.getNom()
+            );
+            historiqueActionDAO.ajouterAction(action);
+        }
+    }
+    
+    /**
+     * Met à jour la quantité d'un article dans le panier
+     * @param articleId l'ID de l'article
+     * @param quantite la nouvelle quantité
+     * @return true si la mise à jour est réussie
+     */
+    public boolean mettreAJourQuantite(int articleId, int quantite) {
+        // Vérifier que la quantité est positive ou zéro (pour supprimer)
+        if (quantite < 0) {
+            return false;
+        }
+        
+        // Si la quantité est zéro, supprimer l'article
+        if (quantite == 0) {
+            supprimerArticle(articleId);
+            return true;
+        }
+        
+        // Récupérer l'article pour vérifier le stock
+        Article article = articleController.getArticleById(articleId);
+        if (article == null) {
+            return false;
+        }
+        
+        // Vérifier le stock
+        if (article.getStock() < quantite) {
+            return false;
+        }
+        
+        // Mettre à jour la quantité
+        panier.mettreAJourQuantite(articleId, quantite);
+        
+        // Enregistrer l'action dans l'historique
+        HistoriqueAction action = new HistoriqueAction(
+            panier.getClient().getId(), 
+            "Mise à jour du panier : " + article.getNom() + " - Quantité : " + quantite
+        );
+        historiqueActionDAO.ajouterAction(action);
+        
+        return true;
+    }
+    
+    /**
+     * Vide le panier
+     */
+    public void viderPanier() {
+        if (!panier.estVide()) {
+            panier.vider();
+            
+            // Enregistrer l'action dans l'historique
+            HistoriqueAction action = new HistoriqueAction(
+                panier.getClient().getId(), 
+                "Vidage du panier"
+            );
+            historiqueActionDAO.ajouterAction(action);
+        }
+    }
+    
+    /**
+     * Récupère le panier
+     * @return le panier
+     */
+    public Panier getPanier() {
+        return panier;
+    }
+    
+    /**
+     * Calcule le montant total du panier
+     * @return le montant total
+     */
+    public double calculerTotal() {
+        return panier.calculerTotal();
+    }
+}
