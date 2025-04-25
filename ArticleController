@@ -1,6 +1,3 @@
-Voici le code sans les commentaires :
-
-```java
 package controller;
 
 import dao.ArticleDAO;
@@ -11,6 +8,9 @@ import model.Utilisateur;
 
 import java.util.List;
 
+/**
+ * Contrôleur gérant les actions liées aux articles
+ */
 public class ArticleController {
     private ArticleDAO articleDAO;
     private HistoriqueActionDAO historiqueActionDAO;
@@ -20,26 +20,50 @@ public class ArticleController {
         this.historiqueActionDAO = new HistoriqueActionDAO();
     }
     
+    /**
+     * Récupère tous les articles
+     * @return la liste des articles
+     */
     public List<Article> getAllArticles() {
         return articleDAO.getAllArticles();
     }
     
+    /**
+     * Récupère les articles par marque
+     * @param marque la marque à filtrer
+     * @return la liste des articles de cette marque
+     */
     public List<Article> getArticlesByMarque(String marque) {
         return articleDAO.getArticlesByMarque(marque);
     }
     
+    /**
+     * Récupère toutes les marques disponibles
+     * @return la liste des marques
+     */
     public List<String> getAllMarques() {
         return articleDAO.getAllMarques();
     }
     
+    /**
+     * Récupère un article par son ID
+     * @param id l'identifiant de l'article
+     * @return l'article correspondant ou null
+     */
     public Article getArticleById(int id) {
         return articleDAO.getArticleById(id);
     }
     
+    /**
+     * Ajoute un nouvel article
+     * @param article l'article à ajouter
+     * @return true si l'ajout est réussi
+     */
     public boolean ajouterArticle(Article article) {
         boolean resultat = articleDAO.ajouterArticle(article);
         
         if (resultat) {
+            // Enregistrer l'action dans l'historique
             Utilisateur utilisateur = UtilisateurController.getUtilisateurConnecte();
             if (utilisateur != null) {
                 HistoriqueAction action = new HistoriqueAction(
@@ -53,10 +77,16 @@ public class ArticleController {
         return resultat;
     }
     
+    /**
+     * Met à jour un article existant
+     * @param article l'article à mettre à jour
+     * @return true si la mise à jour est réussie
+     */
     public boolean mettreAJourArticle(Article article) {
         boolean resultat = articleDAO.mettreAJourArticle(article);
         
         if (resultat) {
+            // Enregistrer l'action dans l'historique
             Utilisateur utilisateur = UtilisateurController.getUtilisateurConnecte();
             if (utilisateur != null) {
                 HistoriqueAction action = new HistoriqueAction(
@@ -70,7 +100,13 @@ public class ArticleController {
         return resultat;
     }
     
+    /**
+     * Supprime un article
+     * @param id l'identifiant de l'article à supprimer
+     * @return true si la suppression est réussie
+     */
     public boolean supprimerArticle(int id) {
+        // Récupérer l'article avant de le supprimer pour l'historique
         Article article = getArticleById(id);
         if (article == null) {
             return false;
@@ -79,6 +115,7 @@ public class ArticleController {
         boolean resultat = articleDAO.supprimerArticle(id);
         
         if (resultat) {
+            // Enregistrer l'action dans l'historique
             Utilisateur utilisateur = UtilisateurController.getUtilisateurConnecte();
             if (utilisateur != null) {
                 HistoriqueAction action = new HistoriqueAction(
@@ -92,18 +129,31 @@ public class ArticleController {
         return resultat;
     }
     
+    /**
+     * Vérifie si un article a assez de stock pour une quantité donnée
+     * @param articleId l'ID de l'article
+     * @param quantite la quantité demandée
+     * @return true si le stock est suffisant
+     */
     public boolean verifierStock(int articleId, int quantite) {
         Article article = getArticleById(articleId);
         return article != null && article.getStock() >= quantite;
     }
     
+    /**
+     * Récupère les données pour le graphique des ventes par article
+     * @return les données pour le graphique
+     */
     public List<Object[]> getVentesParArticle() {
         return articleDAO.getVentesParArticle();
     }
     
+    /**
+     * Récupère les articles les plus vendus
+     * @param limit le nombre d'articles à récupérer
+     * @return la liste des articles les plus vendus
+     */
     public List<Object[]> getArticlesPlusVendus(int limit) {
         return articleDAO.getArticlesPlusVendus(limit);
     }
 }
-
-```
