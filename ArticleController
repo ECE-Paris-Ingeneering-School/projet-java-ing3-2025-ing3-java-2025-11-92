@@ -1,6 +1,3 @@
-Voici le code sans les commentaires :
-
-```java
 package controller;
 
 import dao.ArticleDAO;
@@ -10,8 +7,8 @@ import model.HistoriqueAction;
 import model.Utilisateur;
 
 import java.util.List;
-
-public class ArticleController {
+//Controleur Article
+public class ArticleController {  //Classe article créer avec DAO en liaison entre BDD et interface
     private ArticleDAO articleDAO;
     private HistoriqueActionDAO historiqueActionDAO;
     
@@ -20,26 +17,31 @@ public class ArticleController {
         this.historiqueActionDAO = new HistoriqueActionDAO();
     }
     
+
     public List<Article> getAllArticles() {
         return articleDAO.getAllArticles();
-    }
-    
+    } //Retourne la liste de tout les articles
+
     public List<Article> getArticlesByMarque(String marque) {
         return articleDAO.getArticlesByMarque(marque);
-    }
+    } // On utilise la fonction article par marque créer dans partie model
     
+
     public List<String> getAllMarques() {
         return articleDAO.getAllMarques();
-    }
+    } //On renvoie la liste
     
+
     public Article getArticleById(int id) {
         return articleDAO.getArticleById(id);
-    }
+    } //meme chose avec l'ID de l article
     
+
     public boolean ajouterArticle(Article article) {
         boolean resultat = articleDAO.ajouterArticle(article);
         
         if (resultat) {
+            // Enregistrer l'action dans l'historique on stock l'action
             Utilisateur utilisateur = UtilisateurController.getUtilisateurConnecte();
             if (utilisateur != null) {
                 HistoriqueAction action = new HistoriqueAction(
@@ -53,10 +55,12 @@ public class ArticleController {
         return resultat;
     }
     
+
     public boolean mettreAJourArticle(Article article) {
-        boolean resultat = articleDAO.mettreAJourArticle(article);
+        boolean resultat = articleDAO.mettreAJourArticle(article); //Meme procédé pour mise a jour
         
         if (resultat) {
+            // Enregistrer l'action dans l'historique
             Utilisateur utilisateur = UtilisateurController.getUtilisateurConnecte();
             if (utilisateur != null) {
                 HistoriqueAction action = new HistoriqueAction(
@@ -69,16 +73,15 @@ public class ArticleController {
         
         return resultat;
     }
-    
     public boolean supprimerArticle(int id) {
+        // Récupérer l'article avant de le supprimer pour l'historique
         Article article = getArticleById(id);
         if (article == null) {
-            return false;
+            return false; //Meme chose pour supprimer
         }
-        
         boolean resultat = articleDAO.supprimerArticle(id);
-        
         if (resultat) {
+            // Enregistrer l'action dans l'historique
             Utilisateur utilisateur = UtilisateurController.getUtilisateurConnecte();
             if (utilisateur != null) {
                 HistoriqueAction action = new HistoriqueAction(
@@ -88,22 +91,21 @@ public class ArticleController {
                 historiqueActionDAO.ajouterAction(action);
             }
         }
-        
         return resultat;
     }
-    
+    //Fonction pour verifier si artcile toujours dispo:
     public boolean verifierStock(int articleId, int quantite) {
         Article article = getArticleById(articleId);
         return article != null && article.getStock() >= quantite;
     }
     
+    //Graphique vente/Article
     public List<Object[]> getVentesParArticle() {
         return articleDAO.getVentesParArticle();
     }
     
+    //On récupère article les plus vendus
     public List<Object[]> getArticlesPlusVendus(int limit) {
         return articleDAO.getArticlesPlusVendus(limit);
     }
 }
-
-```
