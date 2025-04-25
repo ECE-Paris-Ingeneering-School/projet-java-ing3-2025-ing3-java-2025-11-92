@@ -6,117 +6,73 @@ import model.Administrateur;
 import model.Client;
 import model.HistoriqueAction;
 import model.Utilisateur;
-
 import java.util.List;
-
-/**
- * Contrôleur gérant les actions liées aux utilisateurs
- */
+// Controller gérant les actions liées aux utilisateurs
 public class UtilisateurController {
     private UtilisateurDAO utilisateurDAO;
     private HistoriqueActionDAO historiqueActionDAO;
     private static Utilisateur utilisateurConnecte;
-    
+
     public UtilisateurController() {
         this.utilisateurDAO = new UtilisateurDAO();
         this.historiqueActionDAO = new HistoriqueActionDAO();
     }
-    
-    /**
-     * Authentifie un utilisateur
-     * @param email l'email de l'utilisateur
-     * @param motDePasse le mot de passe
-     * @return l'utilisateur authentifié ou null
-     */
+
+    // Authentifie un utilisateur
     public Utilisateur authentifier(String email, String motDePasse) {
         Utilisateur utilisateur = utilisateurDAO.authentifier(email, motDePasse);
         if (utilisateur != null) {
-            utilisateurConnecte = utilisateur;
-            
-            // Enregistrer l'action dans l'historique
+            utilisateurConnecte = utilisateur;// Enregistrer l'action dans l'historique
             HistoriqueAction action = new HistoriqueAction(utilisateur.getId(), "Connexion au système");
             historiqueActionDAO.ajouterAction(action);
         }
         return utilisateur;
     }
-    
-    /**
-     * Inscrit un nouveau client
-     * @param nom le nom du client
-     * @param email l'email du client
-     * @param motDePasse le mot de passe du client
-     * @return le client créé ou null
-     */
+
+    // Inscrit et sauvegarde un nouveau client
     public Client inscrireClient(String nom, String email, String motDePasse) {
         // Vérifier si l'email existe déjà
         if (utilisateurDAO.emailExiste(email)) {
             return null;
         }
-        
+
         Client client = new Client();
         client.setNom(nom);
         client.setEmail(email);
         client.setMotDePasse(motDePasse);
         client.setEstAncienClient(false);
-        
+
         if (utilisateurDAO.ajouterClient(client)) {
             // Authentifier directement le client après inscription
             return (Client) authentifier(email, motDePasse);
         }
-        
+
         return null;
     }
-    
-    /**
-     * Récupère tous les clients
-     * @return la liste des clients
-     */
+    // Récupère tous les clients
     public List<Client> getAllClients() {
         return utilisateurDAO.getAllClients();
     }
-    
-    /**
-     * Récupère un client par son ID
-     * @param id l'identifiant du client
-     * @return le client correspondant ou null
-     */
-    public Client getClientById(int id) {
+    public Client getClientById(int id) {// Récupère un client par son ID
         return utilisateurDAO.getClientById(id);
     }
-    
-    /**
-     * Déconnecte l'utilisateur courant
-     */
-    public void deconnecter() {
+    public void deconnecter() {// Déconnecte l'utilisateur courant
         if (utilisateurConnecte != null) {
             // Enregistrer l'action dans l'historique
             HistoriqueAction action = new HistoriqueAction(utilisateurConnecte.getId(), "Déconnexion du système");
             historiqueActionDAO.ajouterAction(action);
-            
             utilisateurConnecte = null;
         }
     }
-    
-    /**
-     * Retourne l'utilisateur actuellement connecté
-     * @return l'utilisateur connecté ou null
-     */
+
+    // Retourne l'utilisateur actuellement connecté
     public static Utilisateur getUtilisateurConnecte() {
         return utilisateurConnecte;
     }
-    
-    /**
-     * Vérifie si l'utilisateur connecté est un administrateur
-     * @return true si c'est un administrateur
-     */
+    // Vérifie si l'utilisateur connecté est un administrateur
     public static boolean estAdministrateur() {
         return utilisateurConnecte instanceof Administrateur;
-    }
-    
-    /**
-     * Vérifie si l'utilisateur connecté est un client
-     * @return true si c'est un client
-     */
+    }// Vérifie si l'utilisateur connecté est un client
     public static boolean estClient() {
         return utilisateurConnecte instanceof Client;
     }
