@@ -15,10 +15,15 @@ import org.jfree.data.general.DefaultPieDataset;
 import utils.SwingUtils;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 /**
@@ -28,73 +33,56 @@ public class AdminMainPanel extends JPanel {
     
     private MainFrame mainFrame;
     private Administrateur admin;
-    
     private ArticleController articleController;
     private CommandeController commandeController;
     private UtilisateurController utilisateurController;
     private HistoriqueController historiqueController;
-    
     private JTabbedPane tabbedPane;
     private JPanel articlesPanel;
     private JPanel clientsPanel;
     private JPanel commandesPanel;
     private JPanel statistiquesPanel;
     private JPanel historiquePanel;
-    
     private JTable articlesTable;
     private DefaultTableModel articlesModel;
-    
     private JTable clientsTable;
     private DefaultTableModel clientsModel;
-    
     private JTable commandesTable;
     private DefaultTableModel commandesModel;
     private JTextArea detailsCommandeArea;
-    
     private JTable historiqueTable;
     private DefaultTableModel historiqueModel;
-    
     public AdminMainPanel(MainFrame mainFrame, Administrateur admin) {
         this.mainFrame = mainFrame;
         this.admin = admin;
         
-        // Initialiser les contrôleurs
-        this.articleController = new ArticleController();
+        this.articleController = new ArticleController(); // Initialise les controllers
         this.commandeController = new CommandeController();
         this.utilisateurController = new UtilisateurController();
         this.historiqueController = new HistoriqueController();
         
-        // Configurer le panneau
-        setLayout(new BorderLayout());
         
-        // Créer les composants
-        initializeComponents();
-        
-        // Charger les données
-        chargerDonnees();
+        setLayout(new BorderLayout()); // Configure le panneau
+        initializeComponents(); // Crée les composants
+        chargerDonnees();// Charge les données
     }
     
-    /**
-     * Initialise les composants du panneau
-     */
     private void initializeComponents() {
-        // Panneau d'en-tête
-        JPanel headerPanel = createHeaderPanel();
         
-        // Panneau à onglets
+        JPanel headerPanel = createHeaderPanel(); //Haut de page 
+        
+       
         tabbedPane = new JTabbedPane();
-        tabbedPane.setFont(SwingUtils.SUBTITLE_FONT);
+        tabbedPane.setFont(SwingUtils.SUBTITLE_FONT);  // onglets
         tabbedPane.setBackground(SwingUtils.WHITE_COLOR);
         tabbedPane.setForeground(SwingUtils.PRIMARY_COLOR);
         
         // Onglet Articles
         articlesPanel = createArticlesPanel();
         tabbedPane.addTab("Gestion des articles", new ImageIcon(), articlesPanel);
-        
         // Onglet Clients
         clientsPanel = createClientsPanel();
         tabbedPane.addTab("Clients", new ImageIcon(), clientsPanel);
-        
         // Onglet Commandes
         commandesPanel = createCommandesPanel();
         tabbedPane.addTab("Commandes", new ImageIcon(), commandesPanel);
@@ -102,36 +90,27 @@ public class AdminMainPanel extends JPanel {
         // Onglet Statistiques
         statistiquesPanel = createStatistiquesPanel();
         tabbedPane.addTab("Statistiques", new ImageIcon(), statistiquesPanel);
-        
         // Onglet Historique
         historiquePanel = createHistoriquePanel();
         tabbedPane.addTab("Historique", new ImageIcon(), historiquePanel);
-        
         // Ajouter les panneaux
         add(headerPanel, BorderLayout.NORTH);
         add(tabbedPane, BorderLayout.CENTER);
     }
-    
-    /**
-     * Crée le panneau d'en-tête
-     * @return le panneau d'en-tête
-     */
     private JPanel createHeaderPanel() {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(SwingUtils.PRIMARY_COLOR);
         headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-        
         // Panel gauche avec titre d'administration
         JLabel welcomeLabel = new JLabel("Administration - " + admin.getNom());
         welcomeLabel.setFont(SwingUtils.TITLE_FONT);
         welcomeLabel.setForeground(SwingUtils.WHITE_COLOR);
-        
         // Panel droit avec bouton de déconnexion
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         rightPanel.setOpaque(false); // Pour garder le fond du header
         
         // Bouton de déconnexion stylisé
-        JButton logoutButton = new JButton("Déconnexion") {
+        JButton logoutButton = new JButton("Déconnexion") { // Bouton déconnexion
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -159,34 +138,26 @@ public class AdminMainPanel extends JPanel {
         logoutButton.setOpaque(false);
         logoutButton.setMargin(new Insets(5, 15, 5, 15));
         logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
         // Action du bouton de déconnexion
         logoutButton.addActionListener(e -> {
             if (SwingUtils.showConfirm(this, "Voulez-vous vraiment vous déconnecter ?")) {
                 mainFrame.deconnecter();
             }
         });
-        
         rightPanel.add(logoutButton);
-        
         headerPanel.add(welcomeLabel, BorderLayout.WEST);
         headerPanel.add(rightPanel, BorderLayout.EAST);
         
         return headerPanel;
     }
-    
-    /**
-     * Crée le panneau de gestion des articles
-     * @return le panneau de gestion des articles
-     */
     private JPanel createArticlesPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(SwingUtils.WHITE_COLOR);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
         // Tableau des articles
-        String[] columns = {"ID", "Nom", "Marque", "Prix unitaire", "Prix gros", "Seuil gros", "Stock"};
-        articlesModel = new DefaultTableModel(columns, 0) {
+        String[] columns = {"ID", "Nom", "Marque", "Prix unitaire", "Prix gros", "Seuil gros", "Stock", "Image"};
+        articlesModel = new DefaultTableModel(columns, 0) {  // Tableau des articles
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -243,25 +214,17 @@ public class AdminMainPanel extends JPanel {
         actionPanel.add(ajouterButton);
         actionPanel.add(modifierButton);
         actionPanel.add(supprimerButton);
-        
-        // Ajouter les composants au panneau
-        panel.add(tableScrollPane, BorderLayout.CENTER);
+        panel.add(tableScrollPane, BorderLayout.CENTER); //Ajout composant
         panel.add(actionPanel, BorderLayout.SOUTH);
         
         return panel;
     }
     
-    /**
-     * Crée le panneau des clients
-     * @return le panneau des clients
-     */
     private JPanel createClientsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(SwingUtils.WHITE_COLOR);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
-        // Tableau des clients
-        String[] columns = {"ID", "Nom", "Email", "Client ancien"};
+        String[] columns = {"ID", "Nom", "Email", "Client ancien"}; //Tableau vu client
         clientsModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -270,23 +233,16 @@ public class AdminMainPanel extends JPanel {
         };
         clientsTable = SwingUtils.createTable(clientsModel);
         JScrollPane tableScrollPane = new JScrollPane(clientsTable);
-        
         // Ajouter les composants au panneau
         panel.add(tableScrollPane, BorderLayout.CENTER);
-        
         return panel;
     }
-    
-    /**
-     * Crée le panneau des commandes
-     * @return le panneau des commandes
-     */
     private JPanel createCommandesPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(SwingUtils.WHITE_COLOR);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        // Tableau des commandes
+        // Tableau des commandes passées
         String[] columns = {"N° Commande", "Client", "Date", "Nombre d'articles", "Montant"};
         commandesModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -296,41 +252,29 @@ public class AdminMainPanel extends JPanel {
         };
         commandesTable = SwingUtils.createTable(commandesModel);
         JScrollPane tableScrollPane = new JScrollPane(commandesTable);
-        
-        // Sélection d'une commande
-        commandesTable.getSelectionModel().addListSelectionListener(e -> {
+        commandesTable.getSelectionModel().addListSelectionListener(e -> { //Selection commande
             if (!e.getValueIsAdjusting() && commandesTable.getSelectedRow() != -1) {
                 afficherDetailsCommande();
             }
-        });
-        
-        // Panneau de détails
+        });//details sur commande 
         JPanel detailsPanel = new JPanel(new BorderLayout());
         detailsPanel.setBackground(SwingUtils.WHITE_COLOR);
         detailsPanel.setBorder(BorderFactory.createTitledBorder("Détails de la commande"));
-        
         detailsCommandeArea = new JTextArea(10, 40);
         detailsCommandeArea.setFont(SwingUtils.REGULAR_FONT);
         detailsCommandeArea.setEditable(false);
         JScrollPane detailsScrollPane = new JScrollPane(detailsCommandeArea);
-        
         detailsPanel.add(detailsScrollPane, BorderLayout.CENTER);
         
-        // Séparation des panneaux
-        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableScrollPane, detailsPanel);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableScrollPane, detailsPanel); //Separation des panneaux
         splitPane.setDividerLocation(300);
         
-        // Ajouter les composants au panneau
+        // Ajoute les composants au panneau
         panel.add(splitPane, BorderLayout.CENTER);
-        
         return panel;
     }
     
-    /**
-     * Crée le panneau des statistiques
-     * @return le panneau des statistiques
-     */
-    private JPanel createStatistiquesPanel() {
+    private JPanel createStatistiquesPanel() { //Panneau stats
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(SwingUtils.WHITE_COLOR);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -339,32 +283,22 @@ public class AdminMainPanel extends JPanel {
         JPanel graphiquesPanel = new JPanel(new GridLayout(1, 2, 10, 10));
         graphiquesPanel.setBackground(SwingUtils.WHITE_COLOR);
         
-        // Graphique camembert des ventes par article
         JPanel panelCamembert = SwingUtils.createTitledPanel("Ventes par article");
         
-        // Graphique histogramme des meilleurs clients
         JPanel panelHistogramme = SwingUtils.createTitledPanel("Top clients");
         
         graphiquesPanel.add(panelCamembert);
         graphiquesPanel.add(panelHistogramme);
         
-        // Ajouter les composants au panneau
         panel.add(graphiquesPanel, BorderLayout.CENTER);
-        
         return panel;
     }
-    
-    /**
-     * Crée le panneau de l'historique
-     * @return le panneau de l'historique
-     */
-    private JPanel createHistoriquePanel() {
+ 
+    private JPanel createHistoriquePanel() { //Historique Panel 
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(SwingUtils.WHITE_COLOR);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
-        // Tableau de l'historique
-        String[] columns = {"Date", "Utilisateur", "Action"};
+        String[] columns = {"Date", "Utilisateur", "Action"}; //tableau
         historiqueModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -376,13 +310,9 @@ public class AdminMainPanel extends JPanel {
         
         // Ajouter les composants au panneau
         panel.add(tableScrollPane, BorderLayout.CENTER);
-        
         return panel;
     }
     
-    /**
-     * Charge les données initiales
-     */
     private void chargerDonnees() {
         // Charger les articles
         chargerArticles();
@@ -399,10 +329,6 @@ public class AdminMainPanel extends JPanel {
         // Charger l'historique
         chargerHistorique();
     }
-    
-    /**
-     * Charge les articles dans le tableau
-     */
     private void chargerArticles() {
         // Vider le tableau
         articlesModel.setRowCount(0);
@@ -412,6 +338,7 @@ public class AdminMainPanel extends JPanel {
         
         // Ajouter les articles au tableau
         for (Article article : articles) {
+            String imageStatus = (article.getImageUrl() != null && !article.getImageUrl().isEmpty()) ? "Oui" : "Non";
             Object[] row = {
                 article.getId(),
                 article.getNom(),
@@ -419,15 +346,12 @@ public class AdminMainPanel extends JPanel {
                 SwingUtils.PRICE_FORMAT.format(article.getPrixUnitaire()),
                 SwingUtils.PRICE_FORMAT.format(article.getPrixGros()),
                 article.getSeuilGros(),
-                article.getStock()
+                article.getStock(),
+                imageStatus
             };
             articlesModel.addRow(row);
         }
     }
-    
-    /**
-     * Charge les clients dans le tableau
-     */
     private void chargerClients() {
         // Vider le tableau
         clientsModel.setRowCount(0);
@@ -446,10 +370,6 @@ public class AdminMainPanel extends JPanel {
             clientsModel.addRow(row);
         }
     }
-    
-    /**
-     * Charge les commandes dans le tableau
-     */
     private void chargerCommandes() {
         // Vider le tableau
         commandesModel.setRowCount(0);
@@ -480,10 +400,6 @@ public class AdminMainPanel extends JPanel {
             commandesModel.addRow(row);
         }
     }
-    
-    /**
-     * Charge les statistiques
-     */
     private void chargerStatistiques() {
         // Graphique camembert des ventes par article
         DefaultPieDataset pieDataset = new DefaultPieDataset();
@@ -507,9 +423,7 @@ public class AdminMainPanel extends JPanel {
         piePlot.setBackgroundPaint(SwingUtils.WHITE_COLOR);
         
         ChartPanel pieChartPanel = new ChartPanel(pieChart);
-        pieChartPanel.setPreferredSize(new Dimension(400, 300));
-        
-        // Graphique histogramme des meilleurs clients
+        pieChartPanel.setPreferredSize(new Dimension(400, 300)); //Meilleur client graphique
         DefaultCategoryDataset barDataset = new DefaultCategoryDataset();
         
         List<Object[]> meilleursClients = commandeController.getMeilleursClients(10);
@@ -541,10 +455,6 @@ public class AdminMainPanel extends JPanel {
         ((JPanel) components[0]).add(pieChartPanel, BorderLayout.CENTER);
         ((JPanel) components[1]).add(barChartPanel, BorderLayout.CENTER);
     }
-    
-    /**
-     * Charge l'historique dans le tableau
-     */
     private void chargerHistorique() {
         // Vider le tableau
         historiqueModel.setRowCount(0);
@@ -562,19 +472,14 @@ public class AdminMainPanel extends JPanel {
             historiqueModel.addRow(row);
         }
     }
-    
-    /**
-     * Affiche le formulaire d'article
-     * @param article l'article à modifier, ou null pour un nouvel article
-     */
     private void afficherFormulaireArticle(Article article) {
         JDialog dialog = new JDialog(
                 SwingUtilities.getWindowAncestor(this),
                 article == null ? "Ajouter un article" : "Modifier un article",
-                Dialog.ModalityType.APPLICATION_MODAL
+                Dialog.ModalityType.APPLICATION_MODAL //Formulaire artcile
         );
 
-        dialog.setSize(400, 500);
+        dialog.setSize(500, 600);
         dialog.setLocationRelativeTo(this);
         
         JPanel panel = new JPanel();
@@ -590,6 +495,14 @@ public class AdminMainPanel extends JPanel {
         JSpinner seuilGrosSpinner = new JSpinner(new SpinnerNumberModel(10, 1, 100, 1));
         JSpinner stockSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 1000, 1));
         
+        // Champ pour l'image
+        JTextField imageUrlField = SwingUtils.createTextField("", 20);
+        JLabel imagePreview = new JLabel();
+        imagePreview.setPreferredSize(new Dimension(150, 150));
+        imagePreview.setBorder(BorderFactory.createLineBorder(SwingUtils.LIGHT_COLOR));
+        imagePreview.setHorizontalAlignment(JLabel.CENTER);
+        imagePreview.setText("Aucune image");
+        
         // Si on modifie un article existant, remplir les champs
         if (article != null) {
             nomField.setText(article.getNom());
@@ -598,6 +511,21 @@ public class AdminMainPanel extends JPanel {
             prixGrosField.setText(String.valueOf(article.getPrixGros()));
             seuilGrosSpinner.setValue(article.getSeuilGros());
             stockSpinner.setValue(article.getStock());
+            
+            if (article.getImageUrl() != null && !article.getImageUrl().isEmpty()) {
+                imageUrlField.setText(article.getImageUrl());
+                try {
+                    File imageFile = new File(article.getImageUrl());
+                    if (imageFile.exists()) {
+                        ImageIcon icon = new ImageIcon(imageFile.getAbsolutePath());
+                        Image image = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+                        imagePreview.setIcon(new ImageIcon(image));
+                        imagePreview.setText("");
+                    }
+                } catch (Exception e) {
+                    System.err.println("Erreur lors du chargement de l'image: " + e.getMessage());
+                }
+            }
         }
         
         // Création des panneaux pour chaque champ
@@ -643,6 +571,52 @@ public class AdminMainPanel extends JPanel {
         stockPanel.add(stockLabel);
         stockPanel.add(stockSpinner);
         
+        // Panneau pour l'image
+        JPanel imagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        imagePanel.setBackground(SwingUtils.WHITE_COLOR);
+        JLabel imageLabel = new JLabel("Image URL:");
+        imageLabel.setPreferredSize(new Dimension(100, 20));
+        imagePanel.add(imageLabel);
+        imagePanel.add(imageUrlField);
+        
+        // Bouton de sélection d'image
+        JButton selectImageButton = SwingUtils.createButton("Parcourir...", false);
+        selectImageButton.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            fileChooser.setFileFilter(new FileNameExtensionFilter("Images", "jpg", "jpeg", "png", "gif"));
+            
+            int result = fileChooser.showOpenDialog(dialog);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+                String fileName = selectedFile.getName();
+                String destinationPath = "/mnt/c/Users/erwan/IdeaProjects/ProjetShopping/resources/images/articles/" + fileName;
+                
+                // Copier le fichier dans le dossier de l'application
+                try {
+                    Files.copy(selectedFile.toPath(), new File(destinationPath).toPath(), 
+                              StandardCopyOption.REPLACE_EXISTING);
+                    
+                    imageUrlField.setText(destinationPath);
+                    
+                    // Mettre à jour l'aperçu
+                    ImageIcon icon = new ImageIcon(destinationPath);
+                    Image image = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+                    imagePreview.setIcon(new ImageIcon(image));
+                    imagePreview.setText("");
+                } catch (IOException ex) {
+                    System.err.println("Erreur lors de la copie de l'image: " + ex.getMessage());
+                    SwingUtils.showError(dialog, "Erreur lors de la copie de l'image");
+                }
+            }
+        });
+        imagePanel.add(selectImageButton);
+        
+        // Panneau pour l'aperçu de l'image
+        JPanel previewPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        previewPanel.setBackground(SwingUtils.WHITE_COLOR);
+        previewPanel.add(imagePreview);
+        
         // Boutons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(SwingUtils.WHITE_COLOR);
@@ -666,10 +640,8 @@ public class AdminMainPanel extends JPanel {
                     SwingUtils.showError(dialog, "Veuillez remplir tous les champs");
                     return;
                 }
-                
                 double prixUnitaire;
                 double prixGros;
-                
                 try {
                     prixUnitaire = Double.parseDouble(prixUnitaireStr);
                     prixGros = Double.parseDouble(prixGrosStr);
@@ -682,12 +654,10 @@ public class AdminMainPanel extends JPanel {
                     SwingUtils.showError(dialog, "Les prix doivent être positifs");
                     return;
                 }
-                
                 if (prixGros >= prixUnitaire) {
                     SwingUtils.showError(dialog, "Le prix de gros doit être inférieur au prix unitaire");
                     return;
                 }
-                
                 // Créer ou mettre à jour l'article
                 if (article == null) {
                     // Nouvel article
@@ -698,6 +668,10 @@ public class AdminMainPanel extends JPanel {
                     nouvelArticle.setPrixGros(prixGros);
                     nouvelArticle.setSeuilGros(seuilGros);
                     nouvelArticle.setStock(stock);
+                    
+                    // Récupérer l'URL de l'image
+                    String imageUrl = imageUrlField.getText().trim();
+                    nouvelArticle.setImageUrl(imageUrl.isEmpty() ? null : imageUrl);
                     
                     boolean resultat = articleController.ajouterArticle(nouvelArticle);
                     
@@ -717,6 +691,10 @@ public class AdminMainPanel extends JPanel {
                     article.setSeuilGros(seuilGros);
                     article.setStock(stock);
                     
+                    // Récupérer l'URL de l'image
+                    String imageUrl = imageUrlField.getText().trim();
+                    article.setImageUrl(imageUrl.isEmpty() ? null : imageUrl);
+                    
                     boolean resultat = articleController.mettreAJourArticle(article);
                     
                     if (resultat) {
@@ -729,10 +707,8 @@ public class AdminMainPanel extends JPanel {
                 }
             }
         });
-        
         buttonPanel.add(cancelButton);
         buttonPanel.add(saveButton);
-        
         // Ajouter les composants au panneau
         panel.add(nomPanel);
         panel.add(Box.createVerticalStrut(10));
@@ -745,26 +721,23 @@ public class AdminMainPanel extends JPanel {
         panel.add(seuilGrosPanel);
         panel.add(Box.createVerticalStrut(10));
         panel.add(stockPanel);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(imagePanel);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(previewPanel);
         panel.add(Box.createVerticalStrut(20));
         panel.add(buttonPanel);
         
         dialog.setContentPane(panel);
         dialog.setVisible(true);
     }
-    
-    /**
-     * Affiche les détails d'une commande
-     */
     private void afficherDetailsCommande() {
         int selectedRow = commandesTable.getSelectedRow();
-        
         if (selectedRow == -1) {
             return;
         }
-        
         int commandeId = (int) commandesModel.getValueAt(selectedRow, 0);
         Commande commande = commandeController.getCommandeById(commandeId);
-        
         if (commande == null) {
             return;
         }
@@ -778,7 +751,7 @@ public class AdminMainPanel extends JPanel {
         details.append("Client: ").append(client != null ? client.getNom() : "Client " + commande.getClientId()).append("\n\n");
         
         details.append("Articles commandés:\n");
-        details.append("--------------------------------------------------\n");
+        details.append("--------------------------------------------------\n");//Affiche détails d une commande
         
         double total = 0;
         for (LigneCommande ligne : commande.getLignesCommande()) {
@@ -812,14 +785,8 @@ public class AdminMainPanel extends JPanel {
         // Afficher les détails
         detailsCommandeArea.setText(details.toString());
     }
-    
-    /**
-     * Met à jour l'administrateur
-     * @param admin le nouvel administrateur
-     */
     public void setAdmin(Administrateur admin) {
         this.admin = admin;
-        
         // Recharger les données
         chargerDonnees();
     }
