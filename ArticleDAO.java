@@ -12,10 +12,7 @@ import java.util.List;
  */
 public class ArticleDAO {
 
-    /**
-     * Récupère tous les articles
-     * @return la liste des articles
-     */
+    // méthode pour récupérer tous les articles, triés par marque et nom
     public List<Article> getAllArticles() {
         List<Article> articles = new ArrayList<>();
         String sql = "SELECT * FROM article ORDER BY marque, nom";
@@ -24,7 +21,8 @@ public class ArticleDAO {
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             
-            while (rs.next()) {
+            while (rs.next()) {            
+                // Pour chaque ligne du résultat, on crée un objet Article
                 Article article = mapResultSetToArticle(rs);
                 articles.add(article);
             }
@@ -35,7 +33,7 @@ public class ArticleDAO {
     }
 
     /**
-     * Récupère les articles par marque
+     * récupère les articles par marque
      * @param marque la marque à filtrer
      * @return la liste des articles de cette marque
      */
@@ -60,10 +58,7 @@ public class ArticleDAO {
         return articles;
     }
 
-    /**
-     * Récupère toutes les marques distinctes
-     * @return la liste des marques
-     */
+    // On récupère toutes les marques distinctes
     public List<String> getAllMarques() {
         List<String> marques = new ArrayList<>();
         String sql = "SELECT DISTINCT marque FROM article ORDER BY marque";
