@@ -27,14 +27,14 @@ public class CommandeDAO {
         Connection conn = null;
         try {
             conn = DatabaseConnection.getConnection();
-            conn.setAutoCommit(false);
+            conn.setAutoCommit(false); // On désactive l'autocommit pour gérer manuellement la transaction
             
-            // Insérer la commande
+            // On prépare l'insertion de la commande
             try (PreparedStatement stmtCommande = conn.prepareStatement(sqlCommande, Statement.RETURN_GENERATED_KEYS)) {
                 stmtCommande.setInt(1, commande.getClientId());
                 stmtCommande.setTimestamp(2, new Timestamp(commande.getDateCommande().getTime()));
                 
-                int affectedRows = stmtCommande.executeUpdate();
+                int affectedRows = stmtCommande.executeUpdate(); // On exécute l'insertion de la commande
                 if (affectedRows == 0) {
                     throw new SQLException("La création de la commande a échoué, aucune ligne affectée.");
                 }
@@ -42,20 +42,19 @@ public class CommandeDAO {
                 try (ResultSet generatedKeys = stmtCommande.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
                         int commandeId = generatedKeys.getInt(1);
-                        commande.setId(commandeId);
+                        commande.setId(commandeId); // On récupère et assigne l'ID généré à la commande
                         
-                        // Insérer les lignes de commande
+                        // On prépare l'insertion des lignes de commande
                         try (PreparedStatement stmtLigneCommande = conn.prepareStatement(sqlLigneCommande)) {
                             for (LigneCommande ligne : commande.getLignesCommande()) {
                                 stmtLigneCommande.setInt(1, commandeId);
                                 stmtLigneCommande.setInt(2, ligne.getArticleId());
                                 stmtLigneCommande.setInt(3, ligne.getQuantite());
-                                stmtLigneCommande.addBatch();
+                                stmtLigneCommande.addBatch(); // On ajoute la requête au batch
                                 
-                                // Mettre à jour le stock
-                                updateStock(conn, ligne.getArticleId(), ligne.getQuantite());
+                                updateStock(conn, ligne.getArticleId(), ligne.getQuantite()); // On met à jour le stock de l'article
                             }
-                            stmtLigneCommande.executeBatch();
+                            stmtLigneCommande.executeBatch(); // On exécute toutes les insertions en une seule fois
                         }
                     } else {
                         throw new SQLException("La création de la commande a échoué, aucun ID obtenu.");
@@ -63,12 +62,12 @@ public class CommandeDAO {
                 }
             }
             
-            conn.commit();
+            conn.commit(); // On valide la transaction
             return true;
         } catch (SQLException e) {
             if (conn != null) {
                 try {
-                    conn.rollback();
+                    conn.rollback(); // On annule la transaction en cas d'erreur
                 } catch (SQLException ex) {
                     System.err.println("Erreur lors du rollback: " + ex.getMessage());
                 }
@@ -78,7 +77,7 @@ public class CommandeDAO {
         } finally {
             if (conn != null) {
                 try {
-                    conn.setAutoCommit(true);
+                    conn.setAutoCommit(true); // On réactive l'autocommit
                 } catch (SQLException e) {
                     System.err.println("Erreur lors de la réinitialisation de l'autocommit: " + e.getMessage());
                 }
@@ -98,7 +97,7 @@ public class CommandeDAO {
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, quantite);
             stmt.setInt(2, articleId);
-            stmt.executeUpdate();
+            stmt.executeUpdate(); // On met à jour le stock de l'article
         }
     }
 
@@ -118,12 +117,9 @@ public class CommandeDAO {
             
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    Commande commande = mapResultSetToCommande(rs);
-                    
-                    // Récupérer les lignes de commande
-                    commande.setLignesCommande(getLignesCommande(commande.getId()));
-                    
-                    commandes.add(commande);
+                    Commande commande = mapResultSetToCommande(rs); // On mappe la commande
+                    commande.setLignesCommande(getLignesCommande(commande.getId())); // On récupère ses lignes de commande
+                    commandes.add(commande); // On ajoute la commande à la liste
                 }
             }
         } catch (SQLException e) {
@@ -148,12 +144,9 @@ public class CommandeDAO {
              ResultSet rs = stmt.executeQuery(sql)) {
             
             while (rs.next()) {
-                Commande commande = mapResultSetToCommande(rs);
-                
-                // Récupérer les lignes de commande
-                commande.setLignesCommande(getLignesCommande(commande.getId()));
-                
-                commandes.add(commande);
+                Commande commande = mapResultSetToCommande(rs); // On mappe la commande
+                commande.setLignesCommande(getLignesCommande(commande.getId())); // On récupère ses lignes de commande
+                commandes.add(commande); // On ajoute la commande à la liste
             }
         } catch (SQLException e) {
             System.err.println("Erreur lors de la récupération des commandes: " + e.getMessage());
@@ -176,11 +169,8 @@ public class CommandeDAO {
             
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    Commande commande = mapResultSetToCommande(rs);
-                    
-                    // Récupérer les lignes de commande
-                    commande.setLignesCommande(getLignesCommande(commande.getId()));
-                    
+                    Commande commande = mapResultSetToCommande(rs); // On mappe la commande
+                    commande.setLignesCommande(getLignesCommande(commande.getId())); // On récupère ses lignes de commande
                     return commande;
                 }
             }
@@ -215,7 +205,7 @@ public class CommandeDAO {
                     ligne.setArticleId(rs.getInt("article_id"));
                     ligne.setQuantite(rs.getInt("quantite"));
                     
-                    // Créer l'article associé
+                    // On crée l'article associé à la ligne de commande
                     Article article = new Article();
                     article.setId(rs.getInt("article_id"));
                     article.setNom(rs.getString("nom"));
@@ -225,9 +215,8 @@ public class CommandeDAO {
                     article.setSeuilGros(rs.getInt("seuil_gros"));
                     article.setStock(rs.getInt("stock"));
                     
-                    ligne.setArticle(article);
-                    
-                    lignes.add(ligne);
+                    ligne.setArticle(article); // On associe l'article à la ligne
+                    lignes.add(ligne); // On ajoute la ligne à la liste
                 }
             }
         } catch (SQLException e) {
@@ -247,7 +236,7 @@ public class CommandeDAO {
         commande.setId(rs.getInt("id"));
         commande.setClientId(rs.getInt("client_id"));
         commande.setDateCommande(rs.getTimestamp("date_commande"));
-        return commande;
+        return commande; // On retourne l'objet Commande créé
     }
     
     /**
@@ -273,10 +262,10 @@ public class CommandeDAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Object[] data = new Object[3];
-                    data[0] = rs.getString("nom");
-                    data[1] = rs.getInt("nb_commandes");
-                    data[2] = rs.getInt("nb_articles");
-                    resultat.add(data);
+                    data[0] = rs.getString("nom"); // On récupère le nom du client
+                    data[1] = rs.getInt("nb_commandes"); // On récupère le nombre de commandes
+                    data[2] = rs.getInt("nb_articles"); // On récupère le nombre total d'articles commandés
+                    resultat.add(data); // On ajoute les données à la liste
                 }
             }
         } catch (SQLException e) {
