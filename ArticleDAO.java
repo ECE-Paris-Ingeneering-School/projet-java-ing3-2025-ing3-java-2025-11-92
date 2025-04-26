@@ -32,11 +32,8 @@ public class ArticleDAO {
         return articles;
     }
 
-    /**
-     * récupère les articles par marque
-     * @param marque la marque à filtrer
-     * @return la liste des articles de cette marque
-     */
+    // On recupere les article par marque 
+    
     public List<Article> getArticlesByMarque(String marque) {
         List<Article> articles = new ArrayList<>();
         String sql = "SELECT * FROM article WHERE marque = ? ORDER BY nom";
@@ -100,11 +97,7 @@ public class ArticleDAO {
         return null;
     }
 
-    /**
-     * Ajoute un nouvel article
-     * @param article l'article à ajouter
-     * @return true si l'ajout est réussi
-     */
+    // Pour ajouter un nouvel Article 
     public boolean ajouterArticle(Article article) {
         String sql = "INSERT INTO article (nom, marque, prix_unitaire, prix_gros, seuil_gros, stock) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";
@@ -136,11 +129,10 @@ public class ArticleDAO {
         }
     }
 
-    /**
-     * Met à jour un article existant
-     * @param article l'article à mettre à jour
-     * @return true si la mise à jour est réussie
-     */
+    // Met à jour un article existant
+     // @param article l'article à mettre à jour
+     // @return true si la mise à jour est réussie
+    
     public boolean mettreAJourArticle(Article article) {
         String sql = "UPDATE article SET nom = ?, marque = ?, prix_unitaire = ?, " +
                 "prix_gros = ?, seuil_gros = ?, stock = ? WHERE id = ?";
@@ -163,11 +155,7 @@ public class ArticleDAO {
         }
     }
 
-    /**
-     * Supprime un article
-     * @param id l'identifiant de l'article à supprimer
-     * @return true si la suppression est réussie
-     */
+    // Pour supp un article
     public boolean supprimerArticle(int id) {
         String sql = "DELETE FROM article WHERE id = ?";
         
@@ -183,12 +171,7 @@ public class ArticleDAO {
         }
     }
 
-    /**
-     * Met à jour le stock d'un article
-     * @param id l'identifiant de l'article
-     * @param quantite la quantité à déduire du stock
-     * @return true si la mise à jour est réussie
-     */
+     // Méthode pour mettre à jour le stock d'un article après un achat
     public boolean mettreAJourStock(int id, int quantite) {
         String sql = "UPDATE article SET stock = stock - ? WHERE id = ?";
         
@@ -205,12 +188,7 @@ public class ArticleDAO {
         }
     }
 
-    /**
-     * Mappe un ResultSet à un objet Article
-     * @param rs le ResultSet contenant les données
-     * @return l'objet Article créé
-     * @throws SQLException en cas d'erreur de lecture
-     */
+    // Transformer une ligne de résultat SQL en objet Article
     private Article mapResultSetToArticle(ResultSet rs) throws SQLException {
         Article article = new Article();
         article.setId(rs.getInt("id"));
@@ -223,11 +201,7 @@ public class ArticleDAO {
         return article;
     }
 
-    /**
-     * Récupère les articles les plus vendus
-     * @param limit le nombre d'articles à récupérer
-     * @return la liste des articles les plus vendus
-     */
+    // On récupère les articles les plus vendus, triés par quantité totale vendue
     public List<Object[]> getArticlesPlusVendus(int limit) {
         List<Object[]> resultat = new ArrayList<>();
         String sql = "SELECT a.nom, a.marque, SUM(lc.quantite) as total_vendu " +
@@ -257,10 +231,7 @@ public class ArticleDAO {
         return resultat;
     }
 
-    /**
-     * Récupère les ventes par article pour les graphiques
-     * @return la liste des ventes par article
-     */
+    // Méthode pour récupérer les quantités totales vendues par article
     public List<Object[]> getVentesParArticle() {
         List<Object[]> resultat = new ArrayList<>();
         String sql = "SELECT a.nom, SUM(lc.quantite) as quantite_vendue " +
