@@ -10,16 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Classe d'accès aux données pour les utilisateurs
+ * Accès aux données pour les utilisateurs (admins, clients)
  */
 public class UtilisateurDAO {
 
-    /**
-     * Vérifie les informations d'authentification d'un utilisateur
-     * @param email l'email de l'utilisateur
-     * @param motDePasse le mot de passe
-     * @return l'utilisateur si authentifié, null sinon
-     */
+    // Vérifie les infos de l'utilisateur pour l'authentification
     public Utilisateur authentifier(String email, String motDePasse) {
         String sql ="SELECT u.id, u.nom, u.email, u.mot_de_passe, " +
                 "c.est_ancien_client, " +
@@ -29,21 +24,24 @@ public class UtilisateurDAO {
                 "LEFT JOIN administrateur a ON u.id = a.utilisateur_id " +
                 "WHERE u.email = ? AND u.mot_de_passe = ?";
         
+        // Affiche une tentative d'authentification
         System.out.println("Tentative d'authentification pour: " + email);
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setString(1, email);
-            stmt.setString(2, motDePasse);
+            stmt.setString(1, email); // On place l'email
+            stmt.setString(2, motDePasse); // On place le mot de passe
             
+            // Affichage de la requête SQL pour debug
             System.out.println("Exécution de la requête SQL: " + stmt);
             
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    String type = rs.getString("type");
+                    String type = rs.getString("type"); // On récupère le type
                     System.out.println("Utilisateur trouvé, type: " + type);
                     
+                    // Si admin, on retourne un admin
                     if ("ADMIN".equals(type)) {
                         Administrateur admin = new Administrateur();
                         admin.setId(rs.getInt("id"));
@@ -51,7 +49,7 @@ public class UtilisateurDAO {
                         admin.setEmail(rs.getString("email"));
                         admin.setMotDePasse(rs.getString("mot_de_passe"));
                         return admin;
-                    } else {
+                    } else { // Sinon on retourne un client
                         Client client = new Client();
                         client.setId(rs.getInt("id"));
                         client.setNom(rs.getString("nom"));
@@ -61,6 +59,7 @@ public class UtilisateurDAO {
                         return client;
                     }
                 } else {
+                    // Aucun utilisateur trouvé
                     System.out.println("Aucun utilisateur trouvé avec ces identifiants");
                 }
             }
@@ -71,11 +70,7 @@ public class UtilisateurDAO {
         return null;
     }
 
-    /**
-     * Ajoute un nouveau client
-     * @param client le client à ajouter
-     * @return true si l'ajout est réussi
-     */
+    // Ajouter un client dans la base
     public boolean ajouterClient(Client client) {
         String sqlUtilisateur = "INSERT INTO utilisateur (nom, email, mot_de_passe) VALUES (?, ?, ?)";
         String sqlClient = "INSERT INTO client (utilisateur_id, est_ancien_client) VALUES (?, ?)";
@@ -83,8 +78,9 @@ public class UtilisateurDAO {
         Connection conn = null;
         try {
             conn = DatabaseConnection.getConnection();
-            conn.setAutoCommit(false);
+            conn.setAutoCommit(false); // Transactionnalité, on commence un bloc de travail
             
+            // Ajouter l'utilisateur dans la table utilisateur
             try (PreparedStatement stmtUtilisateur = conn.prepareStatement(sqlUtilisateur, Statement.RETURN_GENERATED_KEYS)) {
                 stmtUtilisateur.setString(1, client.getNom());
                 stmtUtilisateur.setString(2, client.getEmail());
@@ -97,9 +93,10 @@ public class UtilisateurDAO {
                 
                 try (ResultSet generatedKeys = stmtUtilisateur.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
-                        int utilisateurId = generatedKeys.getInt(1);
+                        int utilisateurId = generatedKeys.getInt(1); // On récupère l'ID de l'utilisateur
                         client.setId(utilisateurId);
                         
+                        // Ajouter le client dans la table client
                         try (PreparedStatement stmtClient = conn.prepareStatement(sqlClient)) {
                             stmtClient.setInt(1, utilisateurId);
                             stmtClient.setBoolean(2, client.isEstAncienClient());
@@ -111,9 +108,10 @@ public class UtilisateurDAO {
                 }
             }
             
-            conn.commit();
+            conn.commit(); // Commit des changements
             return true;
         } catch (SQLException e) {
+            // En cas d'erreur, on annule la transaction
             if (conn != null) {
                 try {
                     conn.rollback();
@@ -126,7 +124,7 @@ public class UtilisateurDAO {
         } finally {
             if (conn != null) {
                 try {
-                    conn.setAutoCommit(true);
+                    conn.setAutoCommit(true); // Réinitialisation de l'auto commit
                 } catch (SQLException e) {
                     System.err.println("Erreur lors de la réinitialisation de l'autocommit: " + e.getMessage());
                 }
@@ -134,11 +132,7 @@ public class UtilisateurDAO {
         }
     }
 
-    /**
-     * Vérifie si un email existe déjà dans la base de données
-     * @param email l'email à vérifier
-     * @return true si l'email existe déjà
-     */
+    // Vérifie si un email existe déjà
     public boolean emailExiste(String email) {
         String sql = "SELECT COUNT(*) FROM utilisateur WHERE email = ?";
         
@@ -149,7 +143,7 @@ public class UtilisateurDAO {
             
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getInt(1) > 0;
+                    return rs.getInt(1) > 0; // Si le compte existe, on retourne vrai
                 }
             }
         } catch (SQLException e) {
@@ -158,10 +152,7 @@ public class UtilisateurDAO {
         return false;
     }
 
-    /**
-     * Récupère tous les clients
-     * @return la liste des clients
-     */
+    // Récupère tous les clients
     public List<Client> getAllClients() {
         List<Client> clients = new ArrayList<>();
         String sql = "SELECT u.id, u.nom, u.email, u.mot_de_passe, c.est_ancien_client " +
@@ -179,7 +170,7 @@ public class UtilisateurDAO {
                 client.setEmail(rs.getString("email"));
                 client.setMotDePasse(rs.getString("mot_de_passe"));
                 client.setEstAncienClient(rs.getBoolean("est_ancien_client"));
-                clients.add(client);
+                clients.add(client); // Ajouter le client à la liste
             }
         } catch (SQLException e) {
             System.err.println("Erreur lors de la récupération des clients: " + e.getMessage());
@@ -187,11 +178,7 @@ public class UtilisateurDAO {
         return clients;
     }
 
-    /**
-     * Récupère un client par son ID
-     * @param id l'identifiant du client
-     * @return le client correspondant ou null
-     */
+    // Récupère un client par son ID
     public Client getClientById(int id) {
         String sql = "SELECT u.id, u.nom, u.email, u.mot_de_passe, c.est_ancien_client " +
                 "FROM utilisateur u " +
