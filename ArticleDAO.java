@@ -12,10 +12,7 @@ import java.util.List;
  */
 public class ArticleDAO {
 
-    /**
-     * Récupère tous les articles
-     * @return la liste des articles
-     */
+    // Récupère tous les articles
     public List<Article> getAllArticles() {
         List<Article> articles = new ArrayList<>();
         String sql = "SELECT * FROM article ORDER BY marque, nom";
@@ -24,6 +21,7 @@ public class ArticleDAO {
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             
+            // On parcourt le résultat et on crée les articles
             while (rs.next()) {
                 Article article = mapResultSetToArticle(rs);
                 articles.add(article);
@@ -34,11 +32,7 @@ public class ArticleDAO {
         return articles;
     }
 
-    /**
-     * Récupère les articles par marque
-     * @param marque la marque à filtrer
-     * @return la liste des articles de cette marque
-     */
+    // Récupère les articles d'une marque donnée
     public List<Article> getArticlesByMarque(String marque) {
         List<Article> articles = new ArrayList<>();
         String sql = "SELECT * FROM article WHERE marque = ? ORDER BY nom";
@@ -60,10 +54,7 @@ public class ArticleDAO {
         return articles;
     }
 
-    /**
-     * Récupère toutes les marques distinctes
-     * @return la liste des marques
-     */
+    // Récupère toutes les marques disponibles
     public List<String> getAllMarques() {
         List<String> marques = new ArrayList<>();
         String sql = "SELECT DISTINCT marque FROM article ORDER BY marque";
@@ -72,6 +63,7 @@ public class ArticleDAO {
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             
+            // On ajoute chaque marque trouvée
             while (rs.next()) {
                 marques.add(rs.getString("marque"));
             }
@@ -81,11 +73,7 @@ public class ArticleDAO {
         return marques;
     }
 
-    /**
-     * Récupère un article par son ID
-     * @param id l'identifiant de l'article
-     * @return l'article correspondant ou null
-     */
+    // Récupère un article par son identifiant
     public Article getArticleById(int id) {
         String sql = "SELECT * FROM article WHERE id = ?";
         
@@ -105,11 +93,7 @@ public class ArticleDAO {
         return null;
     }
 
-    /**
-     * Ajoute un nouvel article
-     * @param article l'article à ajouter
-     * @return true si l'ajout est réussi
-     */
+    // Ajoute un nouvel article à la base de données
     public boolean ajouterArticle(Article article) {
         String sql = "INSERT INTO article (nom, marque, prix_unitaire, prix_gros, seuil_gros, stock) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";
@@ -126,12 +110,12 @@ public class ArticleDAO {
             
             int affectedRows = stmt.executeUpdate();
             if (affectedRows == 0) {
-                return false;
+                return false;  // Si aucune ligne n'est affectée, ça a échoué
             }
             
             try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
-                    article.setId(generatedKeys.getInt(1));
+                    article.setId(generatedKeys.getInt(1)); // On récupère l'ID généré
                 }
             }
             return true;
@@ -141,11 +125,7 @@ public class ArticleDAO {
         }
     }
 
-    /**
-     * Met à jour un article existant
-     * @param article l'article à mettre à jour
-     * @return true si la mise à jour est réussie
-     */
+    // Met à jour les informations d'un article
     public boolean mettreAJourArticle(Article article) {
         String sql = "UPDATE article SET nom = ?, marque = ?, prix_unitaire = ?, " +
                 "prix_gros = ?, seuil_gros = ?, stock = ? WHERE id = ?";
@@ -161,18 +141,14 @@ public class ArticleDAO {
             stmt.setInt(6, article.getStock());
             stmt.setInt(7, article.getId());
             
-            return stmt.executeUpdate() > 0;
+            return stmt.executeUpdate() > 0;  // Retourne true si au moins une ligne est modifiée
         } catch (SQLException e) {
             System.err.println("Erreur lors de la mise à jour de l'article: " + e.getMessage());
             return false;
         }
     }
 
-    /**
-     * Supprime un article
-     * @param id l'identifiant de l'article à supprimer
-     * @return true si la suppression est réussie
-     */
+    // Supprime un article de la base
     public boolean supprimerArticle(int id) {
         String sql = "DELETE FROM article WHERE id = ?";
         
@@ -181,19 +157,14 @@ public class ArticleDAO {
             
             stmt.setInt(1, id);
             
-            return stmt.executeUpdate() > 0;
+            return stmt.executeUpdate() > 0;  // On retourne true si l'article a été supprimé
         } catch (SQLException e) {
             System.err.println("Erreur lors de la suppression de l'article: " + e.getMessage());
             return false;
         }
     }
 
-    /**
-     * Met à jour le stock d'un article
-     * @param id l'identifiant de l'article
-     * @param quantite la quantité à déduire du stock
-     * @return true si la mise à jour est réussie
-     */
+    // Met à jour le stock d'un article (on soustrait la quantité)
     public boolean mettreAJourStock(int id, int quantite) {
         String sql = "UPDATE article SET stock = stock - ? WHERE id = ?";
         
@@ -203,19 +174,14 @@ public class ArticleDAO {
             stmt.setInt(1, quantite);
             stmt.setInt(2, id);
             
-            return stmt.executeUpdate() > 0;
+            return stmt.executeUpdate() > 0;  // On retourne true si le stock a été mis à jour
         } catch (SQLException e) {
             System.err.println("Erreur lors de la mise à jour du stock: " + e.getMessage());
             return false;
         }
     }
 
-    /**
-     * Mappe un ResultSet à un objet Article
-     * @param rs le ResultSet contenant les données
-     * @return l'objet Article créé
-     * @throws SQLException en cas d'erreur de lecture
-     */
+    // Mappe le ResultSet aux attributs d'un article
     private Article mapResultSetToArticle(ResultSet rs) throws SQLException {
         Article article = new Article();
         article.setId(rs.getInt("id"));
@@ -228,11 +194,7 @@ public class ArticleDAO {
         return article;
     }
 
-    /**
-     * Récupère les articles les plus vendus
-     * @param limit le nombre d'articles à récupérer
-     * @return la liste des articles les plus vendus
-     */
+    // Récupère les articles les plus vendus, limités à un nombre défini
     public List<Object[]> getArticlesPlusVendus(int limit) {
         List<Object[]> resultat = new ArrayList<>();
         String sql = "SELECT a.nom, a.marque, SUM(lc.quantite) as total_vendu " +
@@ -262,10 +224,7 @@ public class ArticleDAO {
         return resultat;
     }
 
-    /**
-     * Récupère les ventes par article pour les graphiques
-     * @return la liste des ventes par article
-     */
+    // Récupère les ventes par article pour créer des graphiques
     public List<Object[]> getVentesParArticle() {
         List<Object[]> resultat = new ArrayList<>();
         String sql = "SELECT a.nom, SUM(lc.quantite) as quantite_vendue " +
