@@ -8,14 +8,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Classe d'accès aux données pour l'historique des actions
+ * Accès aux données pour la gestion de l'historique des actions
  */
 public class HistoriqueActionDAO {
 
     /**
-     * Ajoute une nouvelle action à l'historique
-     * @param historiqueAction l'action à ajouter
-     * @return true si l'ajout est réussi
+     * On Enregistre une action dans l'historique
+     * @param historiqueAction l'objet représentant l'action à ajouter
+     * @return true si l'action est correctement ajoutée, sinon false
      */
     public boolean ajouterAction(HistoriqueAction historiqueAction) {
         String sql ="INSERT INTO historique_action (utilisateur_id, action, date_heure) VALUES (?, ?, ?)";
@@ -45,9 +45,9 @@ public class HistoriqueActionDAO {
     }
 
     /**
-     * Récupère l'historique des actions d'un utilisateur
-     * @param utilisateurId l'ID de l'utilisateur
-     * @return la liste des actions
+     * Récupère l'historique des actions d'un utilisateur spécifique
+     * @param utilisateurId l'ID de l'utilisateur dont on veut les actions
+     * @return une liste des actions effectuées par l'utilisateur
      */
     public List<HistoriqueAction> getActionsByUtilisateur(int utilisateurId) {
         List<HistoriqueAction> actions = new ArrayList<>();
@@ -69,14 +69,14 @@ public class HistoriqueActionDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des actions: " + e.getMessage());
+            System.err.println("Problème lors de la récupération des actions: " + e.getMessage());
         }
         return actions;
     }
 
     /**
-     * Récupère toutes les actions des administrateurs
-     * @return la liste des actions des administrateurs
+     * Récupère l'ensemble des actions effectuées par les administrateurs
+     * @return la liste des actions réalisées par les administrateurs
      */
     public List<HistoriqueAction> getActionsAdministrateurs() {
         List<HistoriqueAction> actions = new ArrayList<>();
@@ -95,14 +95,14 @@ public class HistoriqueActionDAO {
                 actions.add(action);
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des actions des administrateurs: " + e.getMessage());
+            System.err.println("Erreur lors de la récupération des actions administratives: " + e.getMessage());
         }
         return actions;
     }
 
     /**
-     * Récupère toutes les actions
-     * @return la liste de toutes les actions
+     * Récupère toutes les actions de l'historique
+     * @return une liste de toutes les actions enregistrées
      */
     public List<HistoriqueAction> getAllActions() {
         List<HistoriqueAction> actions = new ArrayList<>();
@@ -120,16 +120,16 @@ public class HistoriqueActionDAO {
                 actions.add(action);
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la récupération des actions: " + e.getMessage());
+            System.err.println("Problème lors de la récupération des actions globales: " + e.getMessage());
         }
         return actions;
     }
 
     /**
-     * Mappe un ResultSet à un objet HistoriqueAction
-     * @param rs le ResultSet contenant les données
-     * @return l'objet HistoriqueAction créé
-     * @throws SQLException en cas d'erreur de lecture
+     * Transforme un ResultSet en un objet HistoriqueAction
+     * @param rs le ResultSet contenant les données à mapper
+     * @return un objet HistoriqueAction
+     * @throws SQLException en cas d'erreur de lecture du ResultSet
      */
     private HistoriqueAction mapResultSetToHistoriqueAction(ResultSet rs) throws SQLException {
         HistoriqueAction action = new HistoriqueAction();
@@ -138,11 +138,11 @@ public class HistoriqueActionDAO {
         action.setAction(rs.getString("action"));
         action.setDateHeure(rs.getTimestamp("date_heure"));
         
-        // Le nom de l'utilisateur, s'il est disponible
+        // Si le nom de l'utilisateur est disponible, on le récupère
         try {
             action.setNomUtilisateur(rs.getString("nom_utilisateur"));
         } catch (SQLException e) {
-            // Ignorer si la colonne n'existe pas
+            // On ignore si la colonne 'nom_utilisateur' n'est pas présente
         }
         
         return action;
