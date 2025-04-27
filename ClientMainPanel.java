@@ -15,9 +15,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
-/**
- * Panneau principal pour les clients
- */
+// panneau principal du client
 public class ClientMainPanel extends JPanel {
     
     private MainFrame mainFrame;
@@ -57,75 +55,70 @@ public class ClientMainPanel extends JPanel {
         this.mainFrame = mainFrame;
         this.client = client;
         
-        // Initialiser les contrôleurs
+        // init des controllers
         this.articleController = new ArticleController();
         this.panierController = new PanierController(client);
         this.commandeController = new CommandeController();
         this.historiqueController = new HistoriqueController();
         
-        // Configurer le panneau
+        // setup du panneau
         setLayout(new BorderLayout());
         
-        // Créer les composants
+        // créer ts les composants
         initializeComponents();
         
-        // Charger les données
+        // on charge les données au démarrage
         chargerDonnees();
     }
     
-    /**
-     * Initialise les composants du panneau
-     */
+    // méthode pour initialiser les composants
     private void initializeComponents() {
-        // Panneau d'en-tête
+        // header panel
         JPanel headerPanel = createHeaderPanel();
         
-        // Panneau à onglets
+        // création des tabs
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(SwingUtils.SUBTITLE_FONT);
         tabbedPane.setBackground(SwingUtils.WHITE_COLOR);
         tabbedPane.setForeground(SwingUtils.PRIMARY_COLOR);
         
-        // Onglet Catalogue
+        // catalogue onglet
         cataloguePanel = createCataloguePanel();
         tabbedPane.addTab("Catalogue", new ImageIcon(), cataloguePanel);
         
-        // Onglet Panier
+        // panier onglet
         panierPanel = createPanierPanel();
         tabbedPane.addTab("Panier", new ImageIcon(), panierPanel);
         
-        // Onglet Commandes
+        // commandes onglet
         commandesPanel = createCommandesPanel();
         tabbedPane.addTab("Mes commandes", new ImageIcon(), commandesPanel);
         
-        // Onglet Historique
+        // historique onglet
         historiquePanel = createHistoriquePanel();
         tabbedPane.addTab("Historique", new ImageIcon(), historiquePanel);
         
-        // Ajouter les panneaux
+        // on ajoute tout au panneau
         add(headerPanel, BorderLayout.NORTH);
         add(tabbedPane, BorderLayout.CENTER);
     }
     
-    /**
-     * Crée le panneau d'en-tête
-     * @return le panneau d'en-tête
-     */
+    // crée le header (welcome + déconnexion)
     private JPanel createHeaderPanel() {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(SwingUtils.PRIMARY_COLOR);
         headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         
-        // Panel gauche avec message de bienvenue
+        // partie gauche -> msg de bienvenue
         JLabel welcomeLabel = new JLabel("Bienvenue, " + client.getNom());
         welcomeLabel.setFont(SwingUtils.TITLE_FONT);
         welcomeLabel.setForeground(SwingUtils.WHITE_COLOR);
         
-        // Panel droit avec bouton de déconnexion
+        // partie droite -> bouton deco
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        rightPanel.setOpaque(false); // Pour garder le fond du header
+        rightPanel.setOpaque(false); // transparent
         
-        // Bouton de déconnexion stylisé
+        // bouton deco stylé
         JButton logoutButton = new JButton("Déconnexion") {
             @Override
             protected void paintComponent(Graphics g) {
@@ -155,7 +148,7 @@ public class ClientMainPanel extends JPanel {
         logoutButton.setMargin(new Insets(5, 15, 5, 15));
         logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
-        // Action du bouton de déconnexion
+        // action du bouton deco
         logoutButton.addActionListener(e -> {
             if (SwingUtils.showConfirm(this, "Voulez-vous vraiment vous déconnecter ?")) {
                 mainFrame.deconnecter();
@@ -170,16 +163,13 @@ public class ClientMainPanel extends JPanel {
         return headerPanel;
     }
     
-    /**
-     * Crée le panneau du catalogue
-     * @return le panneau du catalogue
-     */
+    // crée panneau catalogue pr afficher articles
     private JPanel createCataloguePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(SwingUtils.WHITE_COLOR);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        // Panneau de filtres
+        // zone des filtres
         JPanel filtrePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         filtrePanel.setBackground(SwingUtils.WHITE_COLOR);
         
@@ -194,18 +184,18 @@ public class ClientMainPanel extends JPanel {
         filtrePanel.add(marqueLabel);
         filtrePanel.add(marqueComboBox);
         
-        // Tableau des articles
+        // table articles
         String[] columns = {"ID", "Nom", "Marque", "Prix unitaire", "Prix gros", "Seuil gros", "Stock"};
         articleModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false;
+                return false; // pas d'édition
             }
         };
         articleTable = SwingUtils.createTable(articleModel);
         JScrollPane tableScrollPane = new JScrollPane(articleTable);
         
-        // Panneau d'actions
+        // panel actions (ajouter au panier)
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         actionPanel.setBackground(SwingUtils.WHITE_COLOR);
         
@@ -223,7 +213,7 @@ public class ClientMainPanel extends JPanel {
         actionPanel.add(quantiteSpinner);
         actionPanel.add(ajouterPanierButton);
         
-        // Ajouter les composants au panneau
+        // assemble tout ça
         panel.add(filtrePanel, BorderLayout.NORTH);
         panel.add(tableScrollPane, BorderLayout.CENTER);
         panel.add(actionPanel, BorderLayout.SOUTH);
@@ -231,27 +221,24 @@ public class ClientMainPanel extends JPanel {
         return panel;
     }
     
-    /**
-     * Crée le panneau du panier
-     * @return le panneau du panier
-     */
+    // crée panneau pr voir/modifier le panier
     private JPanel createPanierPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(SwingUtils.WHITE_COLOR);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        // Tableau du panier
+        // table panier
         String[] columns = {"Article", "Marque", "Quantité", "Prix unitaire", "Prix total"};
         panierModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false;
+                return false; // on bloque l'édition
             }
         };
         panierTable = SwingUtils.createTable(panierModel);
         JScrollPane tableScrollPane = new JScrollPane(panierTable);
         
-        // Panneau de résumé
+        // panel résumé (prix total)
         JPanel resumePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         resumePanel.setBackground(SwingUtils.WHITE_COLOR);
         
@@ -261,7 +248,7 @@ public class ClientMainPanel extends JPanel {
         
         resumePanel.add(totalLabel);
         
-        // Panneau d'actions
+        // panel boutons action
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         actionPanel.setBackground(SwingUtils.WHITE_COLOR);
         
@@ -274,18 +261,20 @@ public class ClientMainPanel extends JPanel {
         actionPanel.add(viderPanierButton);
         actionPanel.add(validerCommandeButton);
         
-        // Panneau du bas
+        // bottom
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBackground(SwingUtils.WHITE_COLOR);
         bottomPanel.add(resumePanel, BorderLayout.NORTH);
         bottomPanel.add(actionPanel, BorderLayout.SOUTH);
         
-        // Ajouter les composants au panneau
+        // tout mettre ensemble
         panel.add(tableScrollPane, BorderLayout.CENTER);
         panel.add(bottomPanel, BorderLayout.SOUTH);
         
         return panel;
     }
+}
+       
     
     /**
      * Crée le panneau des commandes
