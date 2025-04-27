@@ -1,109 +1,292 @@
-Voici le code sans les commentaires :
+// Charge les données initiales
+private void chargerDonnees() {
+    List<String> marques = articleController.getAllMarques();
+    for (String marque : marques) {
+        marqueComboBox.addItem(marque);
+    }
 
-```java
-package controller;
+    // Charge les articles et autres informations
+    chargerArticles();
+    mettreAJourPanier();
+    chargerCommandes();
+    chargerHistorique();
+}
 
-import dao.ArticleDAO;
-import dao.HistoriqueActionDAO;
-import model.Article;
-import model.HistoriqueAction;
-import model.Utilisateur;
+// Recharge les articles dans le tableau
+private void chargerArticles() {
+    articleModel.setRowCount(0);
 
-import java.util.List;
+    List<Article> articles;
+    String marqueSelectionnee = (String) marqueComboBox.getSelectedItem();
 
-public class ArticleController {
-    private ArticleDAO articleDAO;
-    private HistoriqueActionDAO historiqueActionDAO;
-    
-    public ArticleController() {
-        this.articleDAO = new ArticleDAO();
-        this.historiqueActionDAO = new HistoriqueActionDAO();
+    // Si aucune marque n'est choisie, on charge tout
+    if (marqueSelectionnee == null || "Toutes les marques".equals(marqueSelectionnee)) {
+        articles = articleController.getAllArticles();
+    } else {
+        articles = articleController.getArticlesByMarque(marqueSelectionnee);
     }
-    
-    public List<Article> getAllArticles() {
-        return articleDAO.getAllArticles();
-    }
-    
-    public List<Article> getArticlesByMarque(String marque) {
-        return articleDAO.getArticlesByMarque(marque);
-    }
-    
-    public List<String> getAllMarques() {
-        return articleDAO.getAllMarques();
-    }
-    
-    public Article getArticleById(int id) {
-        return articleDAO.getArticleById(id);
-    }
-    
-    public boolean ajouterArticle(Article article) {
-        boolean resultat = articleDAO.ajouterArticle(article);
-        
-        if (resultat) {
-            Utilisateur utilisateur = UtilisateurController.getUtilisateurConnecte();
-            if (utilisateur != null) {
-                HistoriqueAction action = new HistoriqueAction(
-                    utilisateur.getId(), 
-                    "Ajout de l'article " + article.getNom() + " (" + article.getMarque() + ")"
-                );
-                historiqueActionDAO.ajouterAction(action);
-            }
-        }
-        
-        return resultat;
-    }
-    
-    public boolean mettreAJourArticle(Article article) {
-        boolean resultat = articleDAO.mettreAJourArticle(article);
-        
-        if (resultat) {
-            Utilisateur utilisateur = UtilisateurController.getUtilisateurConnecte();
-            if (utilisateur != null) {
-                HistoriqueAction action = new HistoriqueAction(
-                    utilisateur.getId(), 
-                    "Mise à jour de l'article " + article.getNom() + " (" + article.getMarque() + ")"
-                );
-                historiqueActionDAO.ajouterAction(action);
-            }
-        }
-        
-        return resultat;
-    }
-    
-    public boolean supprimerArticle(int id) {
-        Article article = getArticleById(id);
-        if (article == null) {
-            return false;
-        }
-        
-        boolean resultat = articleDAO.supprimerArticle(id);
-        
-        if (resultat) {
-            Utilisateur utilisateur = UtilisateurController.getUtilisateurConnecte();
-            if (utilisateur != null) {
-                HistoriqueAction action = new HistoriqueAction(
-                    utilisateur.getId(), 
-                    "Suppression de l'article " + article.getNom() + " (" + article.getMarque() + ")"
-                );
-                historiqueActionDAO.ajouterAction(action);
-            }
-        }
-        
-        return resultat;
-    }
-    
-    public boolean verifierStock(int articleId, int quantite) {
-        Article article = getArticleById(articleId);
-        return article != null && article.getStock() >= quantite;
-    }
-    
-    public List<Object[]> getVentesParArticle() {
-        return articleDAO.getVentesParArticle();
-    }
-    
-    public List<Object[]> getArticlesPlusVendus(int limit) {
-        return articleDAO.getArticlesPlusVendus(limit);
+
+    // Remplissage du tableau avec les articles
+    for (Article article : articles) {
+        Object[] row = {
+            article.getId(),
+            article.getNom(),
+            article.getMarque(),
+            SwingUtils.PRICE_FORMAT.format(article.getPrixUnitaire()),
+            SwingUtils.PRICE_FORMAT.format(article.getPrixGros()),
+            article.getSeuilGros(),
+            article.getStock()
+        };
+        articleModel.addRow(row);
     }
 }
 
-```
+// Filtre les articles en fonction de la marque
+private void filtrerArticles() {
+    chargerArticles();
+}
+
+// Ajoute un article au panier
+private void ajouterAuPanier() {
+    int selectedRow = articleTable.getSelectedRow();
+
+    if (selectedRow == -1) {
+        SwingUtils.showError(this, "Veuillez sélectionner un article");
+        return;
+    }
+
+    int articleId = (int) articleModel.getValueAt(selectedRow, 0);
+    int quantite = (int) quantiteSpinner.getValue();
+
+    // Ajoute l'article au panier
+    boolean resultat = panierController.ajouterArticle(articleId, quantite, this);
+
+    if (resultat) {
+        if (quantite < articleController.getArticleById(articleId).getSeuilGros()) {
+            SwingUtils.showInfo(this, "Article ajouté au panier");
+        }
+        mettreAJourPanier();
+    } else {
+        SwingUtils.showError(this, "Impossible d'ajouter l'article");
+    }
+}
+
+// Met à jour l'affichage du panier
+private void mettreAJourPanier() {
+    panierModel.setRowCount(0);
+
+    model.Panier panier = panierController.getPanier();
+
+    // Remplissage du panier
+    for (model.LigneCommande ligne : panier.getLignes()) {
+        model.Article article = ligne.getArticle();
+        Object[] row = {
+            article.getNom(),
+            article.getMarque(),
+            ligne.getQuantite(),
+            SwingUtils.PRICE_FORMAT.format(article.getPrixUnitaire()),
+            SwingUtils.PRICE_FORMAT.format(ligne.calculerPrix())
+        };
+        panierModel.addRow(row);
+    }
+
+    totalLabel.setText("Total: " + SwingUtils.PRICE_FORMAT.format(panier.calculerTotal()));
+
+    // Active ou désactive les boutons
+    boolean panierVide = panier.estVide();
+    validerCommandeButton.setEnabled(!panierVide);
+    viderPanierButton.setEnabled(!panierVide);
+}
+
+// Vide le panier après confirmation
+private void viderPanier() {
+    if (SwingUtils.showConfirm(this, "Vider le panier ?")) {
+        panierController.viderPanier();
+        mettreAJourPanier();
+        SwingUtils.showInfo(this, "Panier vidé");
+    }
+}
+
+// Valide la commande et vide le panier
+private void validerCommande() {
+    if (SwingUtils.showConfirm(this, "Valider la commande ?")) {
+        Commande commande = commandeController.validerCommande(panierController.getPanier());
+
+        if (commande != null) {
+            SwingUtils.showInfo(this, "Commande validée");
+            panierController.viderPanier();
+            mettreAJourPanier();
+            chargerCommandes();
+            chargerHistorique();
+            afficherFacture(commande);
+        } else {
+            SwingUtils.showError(this, "Erreur de validation");
+        }
+    }
+}
+
+// Affiche la facture de la commande
+private void afficherFacture(Commande commande) {
+    JDialog factureDialog = new JDialog(
+            SwingUtilities.getWindowAncestor(this),
+            "Facture",
+            Dialog.ModalityType.APPLICATION_MODAL
+    );
+    factureDialog.setSize(500, 600);
+    factureDialog.setLocationRelativeTo(this);
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.setBackground(SwingUtils.WHITE_COLOR);
+    panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+    JPanel headerPanel = new JPanel(new BorderLayout());
+    headerPanel.setBackground(SwingUtils.WHITE_COLOR);
+
+    JLabel titleLabel = new JLabel("FACTURE");
+    titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+    titleLabel.setForeground(SwingUtils.PRIMARY_COLOR);
+
+    JLabel infoLabel = new JLabel("<html>Shopping App<br>Commande #" + commande.getId() +
+                                  "<br>Date: " + commande.getDateCommande() +
+                                  "<br>Client: " + client.getNom() + "</html>");
+    infoLabel.setFont(SwingUtils.REGULAR_FONT);
+
+    headerPanel.add(titleLabel, BorderLayout.NORTH);
+    headerPanel.add(infoLabel, BorderLayout.CENTER);
+
+    String[] columns = {"Article", "Quantité", "Prix unitaire", "Prix total"};
+    DefaultTableModel factureModel = new DefaultTableModel(columns, 0);
+    JTable factureTable = SwingUtils.createTable(factureModel);
+    JScrollPane tableScrollPane = new JScrollPane(factureTable);
+
+    double total = 0;
+    for (model.LigneCommande ligne : commande.getLignesCommande()) {
+        model.Article article = ligne.getArticle();
+        double prixLigne = ligne.calculerPrix();
+        total += prixLigne;
+
+        Object[] row = {
+            article.getNom() + " (" + article.getMarque() + ")",
+            ligne.getQuantite(),
+            SwingUtils.PRICE_FORMAT.format(article.getPrixUnitaire()),
+            SwingUtils.PRICE_FORMAT.format(prixLigne)
+        };
+        factureModel.addRow(row);
+    }
+
+    JPanel footerPanel = new JPanel(new BorderLayout());
+    footerPanel.setBackground(SwingUtils.WHITE_COLOR);
+
+    JLabel totalLabel = new JLabel("Total: " + SwingUtils.PRICE_FORMAT.format(total));
+    totalLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+    totalLabel.setForeground(SwingUtils.PRIMARY_COLOR);
+
+    JButton fermerButton = SwingUtils.createButton("Fermer", true);
+    fermerButton.addActionListener(e -> factureDialog.dispose());
+
+    footerPanel.add(totalLabel, BorderLayout.NORTH);
+    footerPanel.add(fermerButton, BorderLayout.EAST);
+
+    panel.add(headerPanel, BorderLayout.NORTH);
+    panel.add(tableScrollPane, BorderLayout.CENTER);
+    panel.add(footerPanel, BorderLayout.SOUTH);
+
+    factureDialog.setContentPane(panel);
+    factureDialog.setVisible(true);
+}
+
+// Recharge les commandes dans le tableau
+private void chargerCommandes() {
+    commandesModel.setRowCount(0);
+
+    List<Commande> commandes = commandeController.getCommandesByClient(client.getId());
+
+    for (Commande commande : commandes) {
+        int nbArticles = 0;
+        double montant = 0;
+
+        // Calcule le nombre d'articles et le montant total
+        for (model.LigneCommande ligne : commande.getLignesCommande()) {
+            nbArticles += ligne.getQuantite();
+            montant += ligne.calculerPrix();
+        }
+
+        Object[] row = {
+            commande.getId(),
+            commande.getDateCommande(),
+            nbArticles,
+            SwingUtils.PRICE_FORMAT.format(montant)
+        };
+        commandesModel.addRow(row);
+    }
+}
+
+// Affiche les détails de la commande sélectionnée
+private void afficherDetailsCommande() {
+    int selectedRow = commandesTable.getSelectedRow();
+
+    if (selectedRow == -1) return;
+
+    int commandeId = (int) commandesModel.getValueAt(selectedRow, 0);
+    Commande commande = commandeController.getCommandeById(commandeId);
+
+    if (commande == null) return;
+
+    StringBuilder details = new StringBuilder();
+    details.append("Commande #").append(commande.getId()).append("\n");
+    details.append("Date: ").append(commande.getDateCommande()).append("\n\n");
+    details.append("Articles:\n");
+    details.append("--------------------------------------------------\n");
+
+    double total = 0;
+    for (model.LigneCommande ligne : commande.getLignesCommande()) {
+        model.Article article = ligne.getArticle();
+        double prixLigne = ligne.calculerPrix();
+        total += prixLigne;
+
+        details.append(article.getNom()).append(" (").append(article.getMarque()).append(")\n");
+        details.append("Quantité: ").append(ligne.getQuantite()).append("\n");
+        details.append("Prix unitaire: ").append(SwingUtils.PRICE_FORMAT.format(article.getPrixUnitaire())).append("\n");
+
+        if (ligne.getQuantite() >= article.getSeuilGros()) {
+            int qteGros = ligne.getQuantite() / article.getSeuilGros();
+            int qteNormale = ligne.getQuantite() % article.getSeuilGros();
+
+            details.append("Remise gros: ").append(qteGros * article.getSeuilGros()).append(" à ");
+            details.append(SwingUtils.PRICE_FORMAT.format(article.getPrixGros())).append(" l'unité\n");
+
+            if (qteNormale > 0) {
+                details.append("Articles normaux: ").append(qteNormale).append(" à ");
+                details.append(SwingUtils.PRICE_FORMAT.format(article.getPrixUnitaire())).append("\n");
+            }
+        }
+
+        details.append("Sous-total: ").append(SwingUtils.PRICE_FORMAT.format(prixLigne)).append("\n");
+        details.append("--------------------------------------------------\n");
+    }
+
+    details.append("\nTotal: ").append(SwingUtils.PRICE_FORMAT.format(total));
+    detailsCommandeArea.setText(details.toString());
+}
+
+// Recharge l'historique des actions
+private void chargerHistorique() {
+    historiqueModel.setRowCount(0);
+
+    List<HistoriqueAction> actions = historiqueController.getActionsByUtilisateur(client.getId());
+
+    for (HistoriqueAction action : actions) {
+        Object[] row = {
+            action.getDateHeure(),
+            action.getAction()
+        };
+        historiqueModel.addRow(row);
+    }
+}
+
+// Met à jour le client et recharge les données
+public void setClient(Client client) {
+    this.client = client;
+    this.panierController = new PanierController(client);
+    chargerDonnees();
+}
