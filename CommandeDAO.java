@@ -11,14 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Classe d'accès aux données pour les commandes
+ * Classe pour gérer les accès aux données liées aux commandes
  */
 public class CommandeDAO {
 
     /**
-     * Ajoute une nouvelle commande
+     * Ajoute une nouvelle commande à la base de données
      * @param commande la commande à ajouter
-     * @return true si l'ajout est réussi
+     * @return true si l'ajout a bien été effectué, false sinon
      */
     public boolean ajouterCommande(Commande commande) {
         String sqlCommande = "INSERT INTO commande (client_id, date_commande) VALUES (?, ?)";
@@ -29,14 +29,14 @@ public class CommandeDAO {
             conn = DatabaseConnection.getConnection();
             conn.setAutoCommit(false);
             
-            // Insérer la commande
+            // On insère d'abord la commande
             try (PreparedStatement stmtCommande = conn.prepareStatement(sqlCommande, Statement.RETURN_GENERATED_KEYS)) {
                 stmtCommande.setInt(1, commande.getClientId());
                 stmtCommande.setTimestamp(2, new Timestamp(commande.getDateCommande().getTime()));
                 
-                int affectedRows =stmtCommande.executeUpdate();
+                int affectedRows = stmtCommande.executeUpdate();
                 if (affectedRows == 0) {
-                    throw new SQLException("La création de la commande a échoué, aucune ligne affectée.");
+                    throw new SQLException("Échec de la création de la commande, aucune ligne affectée.");
                 }
                 
                 try (ResultSet generatedKeys = stmtCommande.getGeneratedKeys()) {
@@ -44,7 +44,7 @@ public class CommandeDAO {
                         int commandeId = generatedKeys.getInt(1);
                         commande.setId(commandeId);
                         
-                        // Insérer les lignes de commande
+                        // On insère les lignes de commande
                         try (PreparedStatement stmtLigneCommande = conn.prepareStatement(sqlLigneCommande)) {
                             for (LigneCommande ligne : commande.getLignesCommande()) {
                                 stmtLigneCommande.setInt(1, commandeId);
@@ -52,13 +52,13 @@ public class CommandeDAO {
                                 stmtLigneCommande.setInt(3, ligne.getQuantite());
                                 stmtLigneCommande.addBatch();
                                 
-                                // Mettre à jour le stock
+                                // On met à jour le stock de chaque article
                                 updateStock(conn, ligne.getArticleId(), ligne.getQuantite());
                             }
                             stmtLigneCommande.executeBatch();
                         }
                     } else {
-                        throw new SQLException("La création de la commande a échoué, aucun ID obtenu.");
+                        throw new SQLException("Échec de la création de la commande, aucun ID récupéré.");
                     }
                 }
             }
@@ -70,7 +70,7 @@ public class CommandeDAO {
                 try {
                     conn.rollback();
                 } catch (SQLException ex) {
-                    System.err.println("Erreur lors du rollback: " + ex.getMessage());
+                    System.err.println("Problème avec le rollback: " + ex.getMessage());
                 }
             }
             System.err.println("Erreur lors de l'ajout de la commande: " + e.getMessage());
@@ -80,17 +80,17 @@ public class CommandeDAO {
                 try {
                     conn.setAutoCommit(true);
                 } catch (SQLException e) {
-                    System.err.println("Erreur lors de la réinitialisation de l'autocommit: " + e.getMessage());
+                    System.err.println("Erreur réinitialisation autocommit: " + e.getMessage());
                 }
             }
         }
     }
 
     /**
-     * Met à jour le stock d'un article
+     * Met à jour le stock après ajout d'une commande
      * @param conn la connexion à la base de données
      * @param articleId l'ID de l'article
-     * @param quantite la quantité à déduire
+     * @param quantite la quantité d'articles à déduire
      * @throws SQLException en cas d'erreur SQL
      */
     private void updateStock(Connection conn, int articleId, int quantite) throws SQLException {
@@ -103,9 +103,9 @@ public class CommandeDAO {
     }
 
     /**
-     * Récupère les commandes d'un client
+     * Récupère les commandes d'un client spécifique
      * @param clientId l'ID du client
-     * @return la liste des commandes
+     * @return liste des commandes passées par ce client
      */
     public List<Commande> getCommandesByClient(int clientId) {
         List<Commande> commandes = new ArrayList<>();
@@ -120,7 +120,7 @@ public class CommandeDAO {
                 while (rs.next()) {
                     Commande commande = mapResultSetToCommande(rs);
                     
-                    // Récupérer les lignes de commande
+                    // On récupère les lignes associées à cette commande
                     commande.setLignesCommande(getLignesCommande(commande.getId()));
                     
                     commandes.add(commande);
@@ -134,7 +134,7 @@ public class CommandeDAO {
 
     /**
      * Récupère toutes les commandes
-     * @return la liste de toutes les commandes
+     * @return toutes les commandes existantes
      */
     public List<Commande> getAllCommandes() {
         List<Commande> commandes = new ArrayList<>();
@@ -150,7 +150,7 @@ public class CommandeDAO {
             while (rs.next()) {
                 Commande commande = mapResultSetToCommande(rs);
                 
-                // Récupérer les lignes de commande
+                // On récupère les lignes de commande
                 commande.setLignesCommande(getLignesCommande(commande.getId()));
                 
                 commandes.add(commande);
@@ -162,9 +162,9 @@ public class CommandeDAO {
     }
 
     /**
-     * Récupère les détails d'une commande
+     * Récupère une commande spécifique par son ID
      * @param commandeId l'ID de la commande
-     * @return la commande avec ses détails
+     * @return la commande correspondante avec ses lignes
      */
     public Commande getCommandeById(int commandeId) {
         String sql = "SELECT * FROM commande WHERE id = ?";
@@ -178,7 +178,7 @@ public class CommandeDAO {
                 if (rs.next()) {
                     Commande commande = mapResultSetToCommande(rs);
                     
-                    // Récupérer les lignes de commande
+                    // Ajout des lignes de commande
                     commande.setLignesCommande(getLignesCommande(commande.getId()));
                     
                     return commande;
@@ -191,9 +191,9 @@ public class CommandeDAO {
     }
 
     /**
-     * Récupère les lignes d'une commande
+     * Récupère les lignes d'une commande par son ID
      * @param commandeId l'ID de la commande
-     * @return la liste des lignes de commande
+     * @return les lignes de la commande
      */
     private List<LigneCommande> getLignesCommande(int commandeId) {
         List<LigneCommande> lignes = new ArrayList<>();
@@ -215,7 +215,7 @@ public class CommandeDAO {
                     ligne.setArticleId(rs.getInt("article_id"));
                     ligne.setQuantite(rs.getInt("quantite"));
                     
-                    // Créer l'article associé
+                    // Construction de l'objet Article
                     Article article = new Article();
                     article.setId(rs.getInt("article_id"));
                     article.setNom(rs.getString("nom"));
@@ -237,10 +237,10 @@ public class CommandeDAO {
     }
 
     /**
-     * Mappe un ResultSet à un objet Commande
+     * Mappe un ResultSet vers un objet Commande
      * @param rs le ResultSet contenant les données
-     * @return l'objet Commande créé
-     * @throws SQLException en cas d'erreur de lecture
+     * @return l'objet Commande
+     * @throws SQLException si erreur de lecture
      */
     private Commande mapResultSetToCommande(ResultSet rs) throws SQLException {
         Commande commande = new Commande();
@@ -251,8 +251,8 @@ public class CommandeDAO {
     }
     
     /**
-     * Récupère les meilleurs clients
-     * @param limit le nombre de clients à récupérer
+     * Récupère les meilleurs clients en fonction du nombre de commandes
+     * @param limit limite du nombre de clients à récupérer
      * @return la liste des meilleurs clients
      */
     public List<Object[]> getMeilleursClients(int limit) {
