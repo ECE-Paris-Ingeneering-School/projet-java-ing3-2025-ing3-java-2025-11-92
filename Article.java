@@ -11,18 +11,20 @@ public class Article {
     private double prixGros;
     private int seuilGros;
     private int stock;
+    private String imageUrl;
 
     public Article() {
     }
 
-    public Article(int id, String nom, String marque, double prixUnitaire, double prixGros, int seuilGros, int stock) {
+    public Article(int id, String nom, String marque, double prixUnitaire, double prixGros, int seuilGros, int stock, String imageUrl) {
         this.id = id;
-        this.nom = nom;
-        this.marque = marque;
-        this.prixUnitaire = prixUnitaire;
-        this.prixGros = prixGros;
-        this.seuilGros = seuilGros;
+        this.nom= nom;
+        this.marque= marque;
+        this.prixUnitaire= prixUnitaire;
+        this.prixGros =prixGros;
+        this.seuilGros =seuilGros;
         this.stock = stock;
+        this.imageUrl= imageUrl;
     }
 
     public int getId() {
@@ -30,7 +32,7 @@ public class Article {
     }
 
     public void setId(int id) {
-        this.id = id;
+        this.id=id;
     }
 
     public String getNom() {
@@ -38,7 +40,7 @@ public class Article {
     }
 
     public void setNom(String nom) {
-        this.nom = nom;
+        this.nom=nom;
     }
 
     public String getMarque() {
@@ -46,7 +48,7 @@ public class Article {
     }
 
     public void setMarque(String marque) {
-        this.marque = marque;
+        this.marque= marque;
     }
 
     public double getPrixUnitaire() {
@@ -62,7 +64,7 @@ public class Article {
     }
 
     public void setPrixGros(double prixGros) {
-        this.prixGros = prixGros;
+        this.prixGros= prixGros;
     }
 
     public int getSeuilGros() {
@@ -70,7 +72,7 @@ public class Article {
     }
 
     public void setSeuilGros(int seuilGros) {
-        this.seuilGros = seuilGros;
+        this.seuilGros =seuilGros;
     }
 
     public int getStock() {
@@ -78,7 +80,15 @@ public class Article {
     }
 
     public void setStock(int stock) {
-        this.stock = stock;
+        this.stock =stock;
+    }
+    
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl =imageUrl;
     }
 
     /**
@@ -89,7 +99,7 @@ public class Article {
     public double calculerPrix(int quantite) {
         if (quantite >= seuilGros) {
             int qteAvecRemise = quantite / seuilGros;
-            int qteNormale = quantite % seuilGros;
+            int qteNormale =quantite % seuilGros;
             return (qteAvecRemise * seuilGros * prixGros) + (qteNormale * prixUnitaire);
         } else {
             return quantite * prixUnitaire;
